@@ -39,6 +39,8 @@ final class AuthController
             redirect('/login');
         }
 
+        session_regenerate_id(true);
+
         $_SESSION['user_id'] = (int)$user['id'];
         $_SESSION['tenant_id'] = (int)$user['tenant_id'];
 

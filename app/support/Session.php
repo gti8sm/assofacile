@@ -15,9 +15,12 @@ final class Session
         $name = Env::get('SESSION_NAME', 'assofacile_session');
         session_name($name);
 
+        $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+
         session_start([
             'cookie_httponly' => true,
             'cookie_samesite' => 'Lax',
+            'cookie_secure' => $isHttps,
             'use_strict_mode' => true,
         ]);
     }

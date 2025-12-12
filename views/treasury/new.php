@@ -12,6 +12,7 @@ ob_start();
     <?php endif; ?>
 
     <form method="post" class="mt-4 space-y-4 bg-white border border-slate-200 rounded-lg p-4">
+        <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
         <div>
             <label class="block text-sm font-medium mb-1">Type</label>
             <select name="type" class="w-full border border-slate-300 rounded px-3 py-2">

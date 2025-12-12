@@ -21,6 +21,7 @@
             <a href="/changelog" class="text-sm text-slate-700 hover:text-slate-900">Changelog</a>
             <?php if (isset($_SESSION['user_id'])): ?>
                 <form method="post" action="/logout">
+                    <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
                     <button class="text-sm text-slate-700 hover:text-slate-900" type="submit">Déconnexion</button>
                 </form>
             <?php else: ?>
