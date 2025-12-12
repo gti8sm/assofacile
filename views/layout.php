@@ -1,0 +1,35 @@
+<?php
+/** @var string $title */
+/** @var string $content */
+
+?><!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= e($title) ?></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<nav class="bg-white border-b border-slate-200">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+        <a href="/dashboard" class="font-semibold">AssoFacile</a>
+        <div class="flex items-center gap-3">
+            <a href="/treasury" class="text-sm text-slate-700 hover:text-slate-900">Trésorerie</a>
+            <a href="/changelog" class="text-sm text-slate-700 hover:text-slate-900">Changelog</a>
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <form method="post" action="/logout">
+                    <button class="text-sm text-slate-700 hover:text-slate-900" type="submit">Déconnexion</button>
+                </form>
+            <?php else: ?>
+                <a href="/login" class="text-sm text-slate-700 hover:text-slate-900">Connexion</a>
+            <?php endif; ?>
+        </div>
+    </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-4 py-6">
+    <?= $content ?>
+</main>
+</body>
+</html>
