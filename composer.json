@@ -1,0 +1,9 @@
+{
+  "name": "gti8sm/assofacile",
+  "description": "AssoFacile - SaaS de gestion d'association (PHP/MySQL)",
+  "type": "project",
+  "require": {
+    "php": ">=8.1",
+    "google/apiclient": "^2.15"
+  }
+}

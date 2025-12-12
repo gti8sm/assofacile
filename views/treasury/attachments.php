@@ -31,8 +31,15 @@ ob_start();
     <div>
         <label class="block text-sm font-medium mb-1">Ajouter des fichiers (jpg/png/pdf, 10 Mo max)</label>
         <input type="file" name="attachments[]" multiple accept="image/jpeg,image/png,application/pdf" class="w-full">
-        <?php if (App\Support\Modules::isEnabled((int)$_SESSION['tenant_id'], 'drive')): ?>
-            <p class="mt-1 text-xs text-slate-500">Google Drive activé : intégration à venir (OAuth).</p>
+        <?php if (App\Support\Modules::isEnabled((int)$_SESSION['tenant_id'], 'drive') && App\Support\GoogleDrive::isConfigured() && App\Support\GoogleDrive::isAvailable()): ?>
+            <?php if (App\Support\GoogleDrive::isConnected((int)$_SESSION['tenant_id'])): ?>
+                <label class="mt-2 flex items-center gap-2 text-sm text-slate-700">
+                    <input type="checkbox" name="store_driver" value="gdrive">
+                    Stocker sur Google Drive
+                </label>
+            <?php else: ?>
+                <p class="mt-1 text-xs text-slate-500">Google Drive activé mais non connecté (Admin → Connecter).</p>
+            <?php endif; ?>
         <?php endif; ?>
     </div>
 

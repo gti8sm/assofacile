@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TreasuryController;
 use App\Http\Controllers\TreasuryCategoriesController;
 use App\Http\Controllers\TreasuryAttachmentsController;
+use App\Http\Controllers\DriveController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\AdminModulesController;
 
@@ -33,5 +34,9 @@ $router->get('/treasury/export.csv', [TreasuryController::class, 'exportCsv']);
 $router->get('/treasury/attachments', [TreasuryAttachmentsController::class, 'index']);
 $router->post('/treasury/attachments', [TreasuryAttachmentsController::class, 'store']);
 $router->get('/treasury/attachment/download', [TreasuryAttachmentsController::class, 'download']);
+
+$router->get('/drive/connect', [DriveController::class, 'connect']);
+$router->get('/drive/callback', [DriveController::class, 'callback']);
+$router->post('/drive/disconnect', [DriveController::class, 'disconnect']);
 
 $router->get('/changelog', [ChangelogController::class, 'index']);

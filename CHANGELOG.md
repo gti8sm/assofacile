@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.0 - 2025-12-12
+- Google Drive : OAuth (connexion/déconnexion) par association
+- Justificatifs : option de stockage sur Google Drive (si module drive activé)
+
 ## 0.3.0 - 2025-12-12
 - Trésorerie v0.3 : justificatifs multi-fichiers (stockage privé)
 - Préparation du stockage Google Drive (module 'drive' activable, OAuth à venir)

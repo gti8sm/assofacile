@@ -8,6 +8,7 @@ use App\Database\Db;
 use App\Support\Modules;
 use App\Support\Session;
 use App\Support\Storage;
+use App\Support\GoogleDrive;
 
 final class TreasuryAttachmentsController
 {
@@ -84,7 +85,9 @@ final class TreasuryAttachmentsController
             redirect('/treasury');
         }
 
-        $saved = self::saveUploadedFiles((int)$_SESSION['tenant_id'], $transactionId, $_FILES['attachments'] ?? null);
+        $storeDriver = (string)($_POST['store_driver'] ?? 'local');
+        $preferDrive = ($storeDriver === 'gdrive');
+        $saved = self::saveUploadedFiles((int)$_SESSION['tenant_id'], $transactionId, $_FILES['attachments'] ?? null, $preferDrive);
 
         if ($saved <= 0) {
             Session::flash('error', 'Aucun fichier valide (jpg/png/pdf, max 10 Mo).');
@@ -95,13 +98,22 @@ final class TreasuryAttachmentsController
         redirect('/treasury/attachments?transaction_id=' . $transactionId);
     }
 
-    public static function saveUploadedFiles(int $tenantId, int $transactionId, mixed $files): int
+    public static function saveUploadedFiles(int $tenantId, int $transactionId, mixed $files, bool $preferDrive = false): int
     {
         if (!is_array($files) || !isset($files['name']) || !is_array($files['name'])) {
             return 0;
         }
 
         $pdo = Db::pdo();
+
+        $useDrive = $preferDrive
+            && Modules::isEnabled($tenantId, 'drive')
+            && GoogleDrive::isConfigured()
+            && GoogleDrive::isAvailable()
+            && GoogleDrive::isConnected($tenantId);
+
+        $drive = $useDrive ? GoogleDrive::getService($tenantId) : null;
+        $driveFolderId = $useDrive ? GoogleDrive::getDriveFolderId($tenantId) : null;
 
         $saved = 0;
         $count = count($files['name']);
@@ -134,6 +146,44 @@ final class TreasuryAttachmentsController
                 'application/pdf' => 'pdf',
                 default => 'bin',
             };
+
+            if ($drive !== null) {
+                try {
+                    $meta = ['name' => basename($origName)];
+                    if ($driveFolderId) {
+                        $meta['parents'] = [$driveFolderId];
+                    }
+                    $fileMetadata = new \Google_Service_Drive_DriveFile($meta);
+
+                    $content = file_get_contents($tmp);
+                    if ($content !== false) {
+                        $created = $drive->files->create($fileMetadata, [
+                            'data' => $content,
+                            'mimeType' => $mime,
+                            'uploadType' => 'multipart',
+                            'fields' => 'id',
+                        ]);
+
+                        $fileId = (string)($created->id ?? '');
+                        if ($fileId !== '') {
+                            $stmt = $pdo->prepare('INSERT INTO treasury_attachments (tenant_id, transaction_id, storage_driver, gdrive_file_id, original_name, mime_type, size_bytes) VALUES (:tenant_id, :tx, :driver, :file_id, :name, :mime, :size)');
+                            $stmt->execute([
+                                'tenant_id' => $tenantId,
+                                'tx' => $transactionId,
+                                'driver' => 'gdrive',
+                                'file_id' => $fileId,
+                                'name' => $origName,
+                                'mime' => $mime,
+                                'size' => $size,
+                            ]);
+                            $saved++;
+                            continue;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // fallback local
+                }
+            }
 
             $dir = Storage::privatePath('tenant_' . $tenantId . '/treasury/' . $transactionId);
             if (!is_dir($dir)) {
@@ -191,8 +241,36 @@ final class TreasuryAttachmentsController
         }
 
         if ((string)$att['storage_driver'] === 'gdrive') {
-            http_response_code(501);
-            echo '501';
+            $tenantId = (int)$_SESSION['tenant_id'];
+            if (!Modules::isEnabled($tenantId, 'drive')) {
+                http_response_code(403);
+                echo '403';
+                return;
+            }
+
+            $service = GoogleDrive::getService($tenantId);
+            if (!$service) {
+                http_response_code(503);
+                echo '503';
+                return;
+            }
+
+            $fileId = (string)($att['gdrive_file_id'] ?? '');
+            if ($fileId === '') {
+                http_response_code(404);
+                echo '404';
+                return;
+            }
+
+            $response = $service->files->get($fileId, ['alt' => 'media']);
+            $body = $response->getBody();
+
+            header('Content-Type: ' . (string)$att['mime_type']);
+            header('Content-Disposition: attachment; filename="' . str_replace('"', '', (string)$att['original_name']) . '"');
+
+            while (!$body->eof()) {
+                echo $body->read(8192);
+            }
             return;
         }
 

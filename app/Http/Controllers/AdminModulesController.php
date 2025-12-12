@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Database\Db;
 use App\Support\Modules;
 use App\Support\Session;
+use App\Support\GoogleDrive;
 
 final class AdminModulesController
 {
@@ -44,6 +45,9 @@ final class AdminModulesController
         foreach ($enabledRows as $row) {
             $enabledByKey[(string)$row['module_key']] = ((int)$row['is_enabled'] === 1);
         }
+
+        $driveConfigured = GoogleDrive::isConfigured() && GoogleDrive::isAvailable();
+        $driveConnected = $driveConfigured && GoogleDrive::isConnected((int)$_SESSION['tenant_id']);
 
         $flash = Session::flash('success');
         require base_path('views/admin/modules.php');

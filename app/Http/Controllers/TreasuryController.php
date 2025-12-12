@@ -111,7 +111,9 @@ final class TreasuryController
 
         $transactionId = (int)$pdo->lastInsertId();
 
-        $saved = TreasuryAttachmentsController::saveUploadedFiles((int)$_SESSION['tenant_id'], $transactionId, $_FILES['attachments'] ?? null);
+        $storeDriver = (string)($_POST['store_driver'] ?? 'local');
+        $preferDrive = ($storeDriver === 'gdrive');
+        $saved = TreasuryAttachmentsController::saveUploadedFiles((int)$_SESSION['tenant_id'], $transactionId, $_FILES['attachments'] ?? null, $preferDrive);
         if ($saved > 0) {
             Session::flash('success', 'Transaction enregistrée + ' . $saved . ' justificatif(s).');
             redirect('/treasury/attachments?transaction_id=' . $transactionId);
