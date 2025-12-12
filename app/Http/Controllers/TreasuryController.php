@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Database\Db;
 use App\Support\Session;
+use App\Support\Modules;
 
 final class TreasuryController
 {
@@ -13,6 +14,12 @@ final class TreasuryController
     {
         if (!isset($_SESSION['user_id'], $_SESSION['tenant_id'])) {
             redirect('/login');
+        }
+
+        if (!Modules::isEnabled((int)$_SESSION['tenant_id'], 'treasury')) {
+            http_response_code(403);
+            echo '403';
+            return;
         }
 
         $pdo = Db::pdo();
@@ -30,6 +37,12 @@ final class TreasuryController
             redirect('/login');
         }
 
+        if (!Modules::isEnabled((int)$_SESSION['tenant_id'], 'treasury')) {
+            http_response_code(403);
+            echo '403';
+            return;
+        }
+
         $error = Session::flash('error');
         require base_path('views/treasury/new.php');
     }
@@ -38,6 +51,12 @@ final class TreasuryController
     {
         if (!isset($_SESSION['user_id'], $_SESSION['tenant_id'])) {
             redirect('/login');
+        }
+
+        if (!Modules::isEnabled((int)$_SESSION['tenant_id'], 'treasury')) {
+            http_response_code(403);
+            echo '403';
+            return;
         }
 
         $type = (string)($_POST['type'] ?? 'expense');

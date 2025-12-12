@@ -15,7 +15,9 @@
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
         <a href="/dashboard" class="font-semibold">AssoFacile</a>
         <div class="flex items-center gap-3">
-            <a href="/treasury" class="text-sm text-slate-700 hover:text-slate-900">Trésorerie</a>
+            <?php if (isset($_SESSION['tenant_id']) && App\Support\Modules::isEnabled((int)$_SESSION['tenant_id'], 'treasury')): ?>
+                <a href="/treasury" class="text-sm text-slate-700 hover:text-slate-900">Trésorerie</a>
+            <?php endif; ?>
             <a href="/changelog" class="text-sm text-slate-700 hover:text-slate-900">Changelog</a>
             <?php if (isset($_SESSION['user_id'])): ?>
                 <form method="post" action="/logout">

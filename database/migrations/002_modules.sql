@@ -1,0 +1,17 @@
+CREATE TABLE modules (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  module_key VARCHAR(64) NOT NULL,
+  name VARCHAR(190) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_modules_key (module_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE tenant_modules (
+  tenant_id INT UNSIGNED NOT NULL,
+  module_id INT UNSIGNED NOT NULL,
+  is_enabled TINYINT(1) NOT NULL DEFAULT 1,
+  enabled_at TIMESTAMP NULL,
+  PRIMARY KEY (tenant_id, module_id),
+  CONSTRAINT fk_tm_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tm_module FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
