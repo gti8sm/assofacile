@@ -1,0 +1,10 @@
+
+CREATE TABLE treasury_categories (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  tenant_id INT UNSIGNED NOT NULL,
+  name VARCHAR(190) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_tc_tenant_name (tenant_id, name),
+  CONSTRAINT fk_tc_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

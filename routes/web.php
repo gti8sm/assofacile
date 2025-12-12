@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TreasuryController;
+use App\Http\Controllers\TreasuryCategoriesController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\AdminModulesController;
 
@@ -22,5 +23,10 @@ $router->post('/admin/modules', [AdminModulesController::class, 'update']);
 $router->get('/treasury', [TreasuryController::class, 'index']);
 $router->get('/treasury/new', [TreasuryController::class, 'create']);
 $router->post('/treasury/new', [TreasuryController::class, 'store']);
+
+$router->get('/treasury/categories', [TreasuryCategoriesController::class, 'index']);
+$router->post('/treasury/categories', [TreasuryCategoriesController::class, 'store']);
+
+$router->get('/treasury/export.csv', [TreasuryController::class, 'exportCsv']);
 
 $router->get('/changelog', [ChangelogController::class, 'index']);

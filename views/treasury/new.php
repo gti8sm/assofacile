@@ -32,6 +32,18 @@ ob_start();
             <label class="block text-sm font-medium mb-1">Date</label>
             <input name="occurred_on" type="date" class="w-full border border-slate-300 rounded px-3 py-2" required>
         </div>
+        <div>
+            <div class="flex items-center justify-between">
+                <label class="block text-sm font-medium mb-1">Catégorie</label>
+                <a class="text-xs text-slate-600 hover:text-slate-900" href="/treasury/categories">Gérer</a>
+            </div>
+            <select name="category_id" class="w-full border border-slate-300 rounded px-3 py-2">
+                <option value="">—</option>
+                <?php foreach (($categories ?? []) as $c): ?>
+                    <option value="<?= e((string)$c['id']) ?>"><?= e((string)$c['name']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
         <div class="flex gap-2">
             <button class="bg-slate-900 text-white rounded px-3 py-2 text-sm" type="submit">Enregistrer</button>
             <a class="border border-slate-300 rounded px-3 py-2 text-sm" href="/treasury">Annuler</a>
