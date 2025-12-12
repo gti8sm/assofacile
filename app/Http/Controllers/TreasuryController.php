@@ -109,6 +109,14 @@ final class TreasuryController
             'category_id' => $categoryIdInt,
         ]);
 
+        $transactionId = (int)$pdo->lastInsertId();
+
+        $saved = TreasuryAttachmentsController::saveUploadedFiles((int)$_SESSION['tenant_id'], $transactionId, $_FILES['attachments'] ?? null);
+        if ($saved > 0) {
+            Session::flash('success', 'Transaction enregistrée + ' . $saved . ' justificatif(s).');
+            redirect('/treasury/attachments?transaction_id=' . $transactionId);
+        }
+
         Session::flash('success', 'Transaction enregistrée.');
         redirect('/treasury');
     }

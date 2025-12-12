@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TreasuryController;
 use App\Http\Controllers\TreasuryCategoriesController;
+use App\Http\Controllers\TreasuryAttachmentsController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\AdminModulesController;
 
@@ -28,5 +29,9 @@ $router->get('/treasury/categories', [TreasuryCategoriesController::class, 'inde
 $router->post('/treasury/categories', [TreasuryCategoriesController::class, 'store']);
 
 $router->get('/treasury/export.csv', [TreasuryController::class, 'exportCsv']);
+
+$router->get('/treasury/attachments', [TreasuryAttachmentsController::class, 'index']);
+$router->post('/treasury/attachments', [TreasuryAttachmentsController::class, 'store']);
+$router->get('/treasury/attachment/download', [TreasuryAttachmentsController::class, 'download']);
 
 $router->get('/changelog', [ChangelogController::class, 'index']);

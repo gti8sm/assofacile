@@ -11,7 +11,7 @@ ob_start();
         </div>
     <?php endif; ?>
 
-    <form method="post" class="mt-4 space-y-4 bg-white border border-slate-200 rounded-lg p-4">
+    <form method="post" enctype="multipart/form-data" class="mt-4 space-y-4 bg-white border border-slate-200 rounded-lg p-4">
         <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
         <div>
             <label class="block text-sm font-medium mb-1">Type</label>
@@ -43,6 +43,13 @@ ob_start();
                     <option value="<?= e((string)$c['id']) ?>"><?= e((string)$c['name']) ?></option>
                 <?php endforeach; ?>
             </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Justificatifs (optionnel)</label>
+            <input type="file" name="attachments[]" multiple accept="image/jpeg,image/png,application/pdf" class="w-full">
+            <?php if (App\Support\Modules::isEnabled((int)$_SESSION['tenant_id'], 'drive')): ?>
+                <p class="mt-1 text-xs text-slate-500">Google Drive activé : stockage Drive à venir (OAuth).</p>
+            <?php endif; ?>
         </div>
         <div class="flex gap-2">
             <button class="bg-slate-900 text-white rounded px-3 py-2 text-sm" type="submit">Enregistrer</button>

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0 - 2025-12-12
+- Trésorerie v0.3 : justificatifs multi-fichiers (stockage privé)
+- Préparation du stockage Google Drive (module 'drive' activable, OAuth à venir)
+
 ## 0.2.0 - 2025-12-12
 - Trésorerie v0.2 : catégories (création + association aux transactions)
 - Export CSV des transactions

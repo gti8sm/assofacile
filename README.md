@@ -13,6 +13,7 @@ SaaS de gestion d'association (PHP + MySQL), modulaire (core + modules activable
    - `database/migrations/010_treasury.sql`
    - `database/migrations/011_treasury_categories.sql`
    - `database/migrations/012_treasury_add_category.sql`
+   - `database/migrations/013_treasury_attachments.sql`
    - `database/seed.sql`
 4. Servir `public/` (Apache/Nginx).
 5. Se connecter :
@@ -23,6 +24,11 @@ SaaS de gestion d'association (PHP + MySQL), modulaire (core + modules activable
 
 - DocumentRoot à pointer sur `public/`.
 - Activer `mod_rewrite` (le `.htaccess` est fourni).
+
+## Stockage fichiers (justificatifs)
+
+- Les justificatifs sont stockés hors webroot dans `storage/private/`.
+- Le dossier sera créé automatiquement au premier upload.
 
 ## Changelog
 
