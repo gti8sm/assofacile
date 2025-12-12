@@ -18,6 +18,9 @@
             <?php if (isset($_SESSION['tenant_id']) && App\Support\Modules::isEnabled((int)$_SESSION['tenant_id'], 'treasury')): ?>
                 <a href="/treasury" class="text-sm text-slate-700 hover:text-slate-900">Trésorerie</a>
             <?php endif; ?>
+            <?php if (isset($_SESSION['is_admin']) && (int)$_SESSION['is_admin'] === 1): ?>
+                <a href="/admin/modules" class="text-sm text-slate-700 hover:text-slate-900">Admin</a>
+            <?php endif; ?>
             <a href="/changelog" class="text-sm text-slate-700 hover:text-slate-900">Changelog</a>
             <?php if (isset($_SESSION['user_id'])): ?>
                 <form method="post" action="/logout">
