@@ -11,6 +11,12 @@ ob_start();
         </div>
     <?php endif; ?>
 
+    <?php if (!empty($success ?? null)): ?>
+        <div class="mb-4 p-3 rounded bg-emerald-50 text-emerald-700 text-sm border border-emerald-200">
+            <?= e((string)$success) ?>
+        </div>
+    <?php endif; ?>
+
     <form method="post" class="space-y-4">
         <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
         <div>
@@ -25,7 +31,11 @@ ob_start();
     </form>
 
     <p class="mt-4 text-xs text-slate-500">
-        Si c'est une première installation, lance d'abord les migrations SQL (voir README).
+        <?php if (!App\Support\Installer::isLocked()): ?>
+            Première installation : lance <a class="underline" href="/install">/install</a>.
+        <?php else: ?>
+            Si c'est une première installation, lance d'abord les migrations SQL (voir README).
+        <?php endif; ?>
     </p>
 </div>
 <?php

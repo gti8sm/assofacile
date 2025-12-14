@@ -10,8 +10,13 @@ use App\Http\Controllers\TreasuryAttachmentsController;
 use App\Http\Controllers\DriveController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\AdminModulesController;
+use App\Http\Controllers\InstallController;
+use App\Http\Controllers\AdminLicenseController;
 
 $router->get('/', [DashboardController::class, 'index']);
+
+$router->get('/install', [InstallController::class, 'show']);
+$router->post('/install', [InstallController::class, 'submit']);
 
 $router->get('/login', [AuthController::class, 'showLogin']);
 $router->post('/login', [AuthController::class, 'login']);
@@ -21,6 +26,9 @@ $router->get('/dashboard', [DashboardController::class, 'index']);
 
 $router->get('/admin/modules', [AdminModulesController::class, 'index']);
 $router->post('/admin/modules', [AdminModulesController::class, 'update']);
+
+$router->get('/admin/license', [AdminLicenseController::class, 'index']);
+$router->post('/admin/license', [AdminLicenseController::class, 'update']);
 
 $router->get('/treasury', [TreasuryController::class, 'index']);
 $router->get('/treasury/new', [TreasuryController::class, 'create']);

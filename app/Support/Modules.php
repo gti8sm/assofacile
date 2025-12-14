@@ -14,6 +14,12 @@ final class Modules
             return false;
         }
 
+        if (!License::isModuleFree($moduleKey)) {
+            if (License::shouldRecheck($tenantId)) {
+                License::validateOnline($tenantId, $_SERVER['HTTP_HOST'] ?? null, null);
+            }
+        }
+
         if (isset($_SESSION['_modules_enabled'][$tenantId][$moduleKey])) {
             return (bool)$_SESSION['_modules_enabled'][$tenantId][$moduleKey];
         }
@@ -33,6 +39,10 @@ final class Modules
         $row = $stmt->fetch();
 
         $enabled = $row ? ((int)$row['is_enabled'] === 1) : false;
+
+        if ($enabled && !License::isModuleFree($moduleKey)) {
+            $enabled = License::isPaidFeatureAllowed($tenantId);
+        }
         $_SESSION['_modules_enabled'][$tenantId][$moduleKey] = $enabled;
 
         return $enabled;

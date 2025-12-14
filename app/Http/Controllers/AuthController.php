@@ -16,6 +16,7 @@ final class AuthController
         }
 
         $error = Session::flash('error');
+        $success = Session::flash('success');
         require base_path('views/auth/login.php');
     }
 

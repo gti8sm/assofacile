@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/support/helpers.php';
+require __DIR__ . '/Support/helpers.php';
 
 $composerAutoload = dirname(__DIR__) . '/vendor/autoload.php';
 if (is_file($composerAutoload)) {
