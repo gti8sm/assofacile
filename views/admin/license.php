@@ -50,6 +50,12 @@ ob_start();
 
             <div class="text-slate-500">Dernière erreur</div>
             <div class="font-medium"><?= e((string)($license['last_error'] ?? '-')) ?></div>
+
+            <div class="text-slate-500">Token valide jusqu'au</div>
+            <div class="font-medium"><?= e((string)($license['token_valid_until'] ?? '-')) ?></div>
+
+            <div class="text-slate-500">Token émis le</div>
+            <div class="font-medium"><?= e((string)($license['token_issued_at'] ?? '-')) ?></div>
         </div>
 
         <p class="mt-4 text-xs text-slate-500">

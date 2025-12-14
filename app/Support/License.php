@@ -40,12 +40,73 @@ final class License
             return true;
         }
 
+        if (self::isSignedTokenValid($row)) {
+            return true;
+        }
+
         $graceUntil = (string)($row['grace_until'] ?? '');
         if ($graceUntil !== '') {
             return self::isDateInFuture($graceUntil);
         }
 
         return false;
+    }
+
+    /** @param array<string,mixed> $row */
+    private static function isSignedTokenValid(array $row): bool
+    {
+        $token = (string)($row['signed_token'] ?? '');
+        $validUntil = (string)($row['token_valid_until'] ?? '');
+        if ($token === '' || $validUntil === '') {
+            return false;
+        }
+
+        if (!self::isDateInFuture($validUntil)) {
+            return false;
+        }
+
+        $pub = (string)(Env::get('LICENSE_PUBLIC_KEY', '') ?? '');
+        if ($pub === '') {
+            return false;
+        }
+
+        if (!function_exists('sodium_crypto_sign_verify_detached')) {
+            return false;
+        }
+
+        return self::verifyEd25519Token($token, $pub);
+    }
+
+    private static function verifyEd25519Token(string $token, string $publicKeyB64): bool
+    {
+        $parts = explode('.', $token);
+        if (count($parts) !== 3) {
+            return false;
+        }
+
+        [$h, $p, $s] = $parts;
+        if ($h === '' || $p === '' || $s === '') {
+            return false;
+        }
+
+        $msg = $h . '.' . $p;
+        $sig = self::b64urlDecode($s);
+        $pub = base64_decode($publicKeyB64, true);
+        if ($sig === false || $pub === false) {
+            return false;
+        }
+
+        return sodium_crypto_sign_verify_detached($sig, $msg, $pub);
+    }
+
+    private static function b64urlDecode(string $in): string|false
+    {
+        $b64 = strtr($in, '-_', '+/');
+        $pad = strlen($b64) % 4;
+        if ($pad > 0) {
+            $b64 .= str_repeat('=', 4 - $pad);
+        }
+        return base64_decode($b64, true);
     }
 
     public static function upsertKey(int $tenantId, string $licenseKey): void
@@ -117,6 +178,8 @@ final class License
         $status = (string)($data['status'] ?? 'invalid');
         $planType = isset($data['plan_type']) ? (string)$data['plan_type'] : null;
         $validUntil = isset($data['valid_until']) ? (string)$data['valid_until'] : null;
+        $signedToken = isset($data['signed_token']) ? (string)$data['signed_token'] : null;
+        $tokenValidUntil = isset($data['token_valid_until']) ? (string)$data['token_valid_until'] : null;
 
         $graceDays = self::graceDays();
         $graceUntil = date('Y-m-d', time() + ($graceDays * 86400));
@@ -128,6 +191,9 @@ final class License
                  plan_type = :plan_type,
                  valid_until = :valid_until,
                  grace_until = :grace_until,
+                 signed_token = :signed_token,
+                 token_valid_until = :token_valid_until,
+                 token_issued_at = IF(:signed_token IS NULL, token_issued_at, NOW()),
                  last_checked_at = NOW(),
                  last_error = NULL
              WHERE tenant_id = :tenant_id'
@@ -139,6 +205,8 @@ final class License
             'plan_type' => $planType,
             'valid_until' => $validUntil,
             'grace_until' => $status === 'active' ? null : $graceUntil,
+            'signed_token' => $signedToken,
+            'token_valid_until' => $tokenValidUntil,
         ]);
 
         return ['ok' => $status === 'active', 'status' => $status, 'message' => null];
