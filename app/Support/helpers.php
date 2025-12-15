@@ -18,3 +18,17 @@ function base_path(string $path = ''): string
     $base = dirname(__DIR__, 2);
     return $path === '' ? $base : $base . DIRECTORY_SEPARATOR . ltrim($path, '/\\');
 }
+
+function date_fr(?string $ymd): string
+{
+    if ($ymd === null || $ymd === '') {
+        return '';
+    }
+
+    $dt = \DateTimeImmutable::createFromFormat('Y-m-d', $ymd);
+    if (!$dt) {
+        return $ymd;
+    }
+
+    return $dt->format('d/m/Y');
+}

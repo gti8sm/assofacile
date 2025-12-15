@@ -32,7 +32,7 @@ ob_start();
         <tbody>
         <?php foreach ($transactions as $t): ?>
             <tr class="border-t border-slate-100">
-                <td class="p-3"><?= e((string)$t['occurred_on']) ?></td>
+                <td class="p-3"><?= e(date_fr((string)$t['occurred_on'])) ?></td>
                 <td class="p-3"><?= e((string)$t['label']) ?></td>
                 <td class="p-3 text-slate-600"><?= e((string)($t['category_name'] ?? '')) ?></td>
                 <td class="p-3 text-right text-red-700">
