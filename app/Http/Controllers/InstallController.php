@@ -101,6 +101,11 @@ final class InstallController
             redirect('/install');
         }
 
+        if (Installer::hasTenantsTable($pdo)) {
+            Session::flash('error', 'La base semble déjà initialisée (table tenants existante). Utilise une base vide ou supprime les tables existantes, puis relance /install.');
+            redirect('/install');
+        }
+
         $mig = Installer::runMigrations($pdo);
         if (!$mig['ok']) {
             Session::flash('error', 'Migrations échouées: ' . (string)$mig['error']);

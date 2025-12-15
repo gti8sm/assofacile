@@ -49,6 +49,14 @@ final class Installer
         ]);
     }
 
+    public static function hasTenantsTable(PDO $pdo): bool
+    {
+        $stmt = $pdo->prepare("SHOW TABLES LIKE 'tenants'");
+        $stmt->execute();
+        $row = $stmt->fetch();
+        return $row !== false;
+    }
+
     /** @return array{ok: bool, error: ?string} */
     public static function runMigrations(PDO $pdo): array
     {
