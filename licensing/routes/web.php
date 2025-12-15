@@ -10,6 +10,7 @@ use Licensing\Http\Controllers\ApiLicensesController;
 $router->get('/', [LicensesController::class, 'index']);
 
 $router->get('/install', [InstallController::class, 'show']);
+$router->get('/install/keys', [InstallController::class, 'generateKeys']);
 $router->post('/install', [InstallController::class, 'submit']);
 
 $router->get('/login', [AuthController::class, 'showLogin']);

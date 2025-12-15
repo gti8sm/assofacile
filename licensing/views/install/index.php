@@ -61,9 +61,67 @@ ob_start();
             </div>
         </div>
 
+        <div>
+            <h2 class="text-sm font-semibold mb-2">Clés de signature (Ed25519)</h2>
+            <p class="text-xs text-slate-500 mb-2">La clé privée reste sur le serveur de licences. La clé publique est à copier dans l'application AssoFacile.</p>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Clé privée (base64)</label>
+                    <textarea id="license_private_key_b64" name="license_private_key_b64" class="w-full border border-slate-300 rounded px-3 py-2" rows="3"><?= e((string)($data['license_private_key_b64'] ?? '')) ?></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Clé publique (base64)</label>
+                    <textarea id="license_public_key_b64" name="license_public_key_b64" class="w-full border border-slate-300 rounded px-3 py-2" rows="2" readonly><?= e((string)($data['license_public_key_b64'] ?? '')) ?></textarea>
+                </div>
+
+                <button id="btn_generate_keys" type="button" class="w-full border border-slate-300 rounded px-3 py-2 bg-slate-50">Générer une paire de clés</button>
+            </div>
+        </div>
+
+        <div>
+            <h2 class="text-sm font-semibold mb-2">Email</h2>
+            <div class="space-y-3">
+                <label class="inline-flex items-center gap-2 text-sm">
+                    <input type="checkbox" name="send_keys_email" value="1" <?= !empty($data['send_keys_email']) ? 'checked' : '' ?>>
+                    Envoyer la clé publique par email
+                </label>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email destinataire</label>
+                    <input name="notify_email" type="email" value="<?= e((string)($data['notify_email'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2" placeholder="ton@email.fr">
+                </div>
+            </div>
+        </div>
+
         <button class="w-full bg-slate-900 text-white rounded px-3 py-2" type="submit">Installer</button>
     </form>
 </div>
+
+<script>
+(() => {
+  const btn = document.getElementById('btn_generate_keys');
+  const priv = document.getElementById('license_private_key_b64');
+  const pub = document.getElementById('license_public_key_b64');
+  if (!btn || !priv || !pub) return;
+
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    btn.textContent = 'Génération...';
+    try {
+      const res = await fetch('/install/keys', { method: 'GET' });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Erreur inconnue');
+      priv.value = json.private_b64 || '';
+      pub.value = json.public_b64 || '';
+    } catch (e) {
+      alert(e && e.message ? e.message : 'Erreur lors de la génération.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Générer une paire de clés';
+    }
+  });
+})();
+</script>
 <?php
 $content = ob_get_clean();
 require base_path('views/layout.php');
