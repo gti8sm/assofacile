@@ -150,8 +150,6 @@ final class InstallController
             redirect('/install');
         }
 
-        License::validateOnline($tenantId, $_SERVER['HTTP_HOST'] ?? null, null);
-
         Installer::writeEnv([
             'DB_HOST' => $dbHost,
             'DB_PORT' => $dbPort,
