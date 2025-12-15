@@ -39,6 +39,18 @@ final class TreasuryController
         $stmt->execute(['tenant_id' => (int)$_SESSION['tenant_id']]);
         $transactions = $stmt->fetchAll();
 
+        $totalExpenseCents = 0;
+        $totalIncomeCents = 0;
+        foreach ($transactions as $t) {
+            $amount = (int)($t['amount_cents'] ?? 0);
+            if ((string)($t['type'] ?? '') === 'income') {
+                $totalIncomeCents += $amount;
+            } else {
+                $totalExpenseCents += $amount;
+            }
+        }
+        $balanceCents = $totalIncomeCents - $totalExpenseCents;
+
         $flash = Session::flash('success');
         require base_path('views/treasury/index.php');
     }

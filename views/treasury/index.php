@@ -17,6 +17,21 @@ ob_start();
     </div>
 <?php endif; ?>
 
+<div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div class="bg-white border border-slate-200 rounded-lg p-4">
+        <div class="text-xs text-slate-500">Dépenses (100 dernières)</div>
+        <div class="mt-1 text-lg font-semibold text-red-700"><?= number_format(((int)($totalExpenseCents ?? 0)) / 100, 2, ',', ' ') ?> €</div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-lg p-4">
+        <div class="text-xs text-slate-500">Recettes (100 dernières)</div>
+        <div class="mt-1 text-lg font-semibold text-emerald-700"><?= number_format(((int)($totalIncomeCents ?? 0)) / 100, 2, ',', ' ') ?> €</div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-lg p-4">
+        <div class="text-xs text-slate-500">Solde (100 dernières)</div>
+        <div class="mt-1 text-lg font-semibold text-slate-900"><?= number_format(((int)($balanceCents ?? 0)) / 100, 2, ',', ' ') ?> €</div>
+    </div>
+</div>
+
 <div class="mt-4 bg-white border border-slate-200 rounded-lg overflow-hidden">
     <table class="w-full text-sm">
         <thead class="bg-slate-50">
