@@ -1,6 +1,7 @@
 <?php
 $title = 'Nouvelle transaction';
 ob_start();
+$defaultDate = date('Y-m-d');
 ?>
 <div class="max-w-xl">
     <h1 class="text-2xl font-semibold">Nouvelle transaction</h1>
@@ -30,7 +31,7 @@ ob_start();
         </div>
         <div>
             <label class="block text-sm font-medium mb-1">Date</label>
-            <input name="occurred_on" type="date" class="w-full border border-slate-300 rounded px-3 py-2" required>
+            <input name="occurred_on" type="date" value="<?= e((string)($_POST['occurred_on'] ?? $defaultDate)) ?>" class="w-full border border-slate-300 rounded px-3 py-2" required>
         </div>
         <div>
             <div class="flex items-center justify-between">

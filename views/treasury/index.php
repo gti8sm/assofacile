@@ -24,8 +24,8 @@ ob_start();
             <th class="text-left p-3">Date</th>
             <th class="text-left p-3">Libellé</th>
             <th class="text-left p-3">Catégorie</th>
-            <th class="text-left p-3">Type</th>
-            <th class="text-right p-3">Montant</th>
+            <th class="text-right p-3">Dépenses</th>
+            <th class="text-right p-3">Recettes</th>
             <th class="text-right p-3">Justificatifs</th>
         </tr>
         </thead>
@@ -35,8 +35,16 @@ ob_start();
                 <td class="p-3"><?= e((string)$t['occurred_on']) ?></td>
                 <td class="p-3"><?= e((string)$t['label']) ?></td>
                 <td class="p-3 text-slate-600"><?= e((string)($t['category_name'] ?? '')) ?></td>
-                <td class="p-3"><?= e((string)$t['type']) ?></td>
-                <td class="p-3 text-right"><?= number_format(((int)$t['amount_cents']) / 100, 2, ',', ' ') ?> €</td>
+                <td class="p-3 text-right text-red-700">
+                    <?php if ((string)$t['type'] === 'expense'): ?>
+                        <?= number_format(((int)$t['amount_cents']) / 100, 2, ',', ' ') ?> €
+                    <?php endif; ?>
+                </td>
+                <td class="p-3 text-right text-emerald-700">
+                    <?php if ((string)$t['type'] === 'income'): ?>
+                        <?= number_format(((int)$t['amount_cents']) / 100, 2, ',', ' ') ?> €
+                    <?php endif; ?>
+                </td>
                 <td class="p-3 text-right">
                     <a class="border border-slate-300 rounded px-2 py-1 text-xs" href="/treasury/attachments?transaction_id=<?= e((string)$t['id']) ?>">Voir</a>
                 </td>
