@@ -17,6 +17,38 @@ ob_start();
     </div>
 <?php endif; ?>
 
+<?php
+$activePeriod = (string)($_GET['period'] ?? 'month');
+$from = (string)($_GET['from'] ?? '');
+$to = (string)($_GET['to'] ?? '');
+$btnBase = 'border border-slate-300 rounded px-3 py-2 text-sm';
+$btnActive = 'bg-slate-900 text-white border-slate-900';
+$btnInactive = 'bg-white text-slate-900 hover:bg-slate-50';
+?>
+
+<div class="mt-4 bg-white border border-slate-200 rounded-lg p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+            <a class="<?= e($btnBase . ' ' . ($activePeriod === 'month' ? $btnActive : $btnInactive)) ?>" href="/treasury?period=month">Mois</a>
+            <a class="<?= e($btnBase . ' ' . ($activePeriod === 'prev_month' ? $btnActive : $btnInactive)) ?>" href="/treasury?period=prev_month">Mois -1</a>
+            <a class="<?= e($btnBase . ' ' . ($activePeriod === 'year' ? $btnActive : $btnInactive)) ?>" href="/treasury?period=year">Année</a>
+        </div>
+
+        <form method="get" class="flex flex-wrap items-end gap-2">
+            <input type="hidden" name="period" value="custom">
+            <div>
+                <label class="block text-xs text-slate-600">Du</label>
+                <input name="from" type="date" value="<?= e($from) ?>" class="border border-slate-300 rounded px-2 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs text-slate-600">Au</label>
+                <input name="to" type="date" value="<?= e($to) ?>" class="border border-slate-300 rounded px-2 py-2 text-sm">
+            </div>
+            <button class="bg-slate-900 text-white rounded px-3 py-2 text-sm" type="submit">OK</button>
+        </form>
+    </div>
+</div>
+
 <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
     <div class="bg-white border border-slate-200 rounded-lg p-4">
         <div class="text-xs text-slate-500">Dépenses (100 dernières)</div>

@@ -27,16 +27,53 @@ final class TreasuryController
     {
         self::guard();
 
+        $period = (string)($_GET['period'] ?? 'month');
+        $from = '';
+        $to = '';
+
+        $today = new \DateTimeImmutable('today');
+        if ($period === 'prev_month') {
+            $start = $today->modify('first day of last month');
+            $end = $today->modify('last day of last month');
+            $from = $start->format('Y-m-d');
+            $to = $end->format('Y-m-d');
+        } elseif ($period === 'year') {
+            $start = $today->setDate((int)$today->format('Y'), 1, 1);
+            $end = $today->setDate((int)$today->format('Y'), 12, 31);
+            $from = $start->format('Y-m-d');
+            $to = $end->format('Y-m-d');
+        } elseif ($period === 'custom') {
+            $from = (string)($_GET['from'] ?? '');
+            $to = (string)($_GET['to'] ?? '');
+            $isValid = (bool)preg_match('/^\d{4}-\d{2}-\d{2}$/', $from) && (bool)preg_match('/^\d{4}-\d{2}-\d{2}$/', $to);
+            if (!$isValid) {
+                $period = 'month';
+            }
+        }
+
+        if ($period === 'month') {
+            $start = $today->modify('first day of this month');
+            $end = $today->modify('last day of this month');
+            $from = $start->format('Y-m-d');
+            $to = $end->format('Y-m-d');
+        }
+
         $pdo = Db::pdo();
         $stmt = $pdo->prepare(
             'SELECT tt.id, tt.type, tt.amount_cents, tt.label, tt.occurred_on, tc.name AS category_name
              FROM treasury_transactions tt
              LEFT JOIN treasury_categories tc ON tc.id = tt.category_id
              WHERE tt.tenant_id = :tenant_id
+               AND tt.occurred_on >= :from
+               AND tt.occurred_on <= :to
              ORDER BY tt.occurred_on DESC, tt.id DESC
              LIMIT 100'
         );
-        $stmt->execute(['tenant_id' => (int)$_SESSION['tenant_id']]);
+        $stmt->execute([
+            'tenant_id' => (int)$_SESSION['tenant_id'],
+            'from' => $from,
+            'to' => $to,
+        ]);
         $transactions = $stmt->fetchAll();
 
         $totalExpenseCents = 0;
