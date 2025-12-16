@@ -26,11 +26,18 @@ ob_start();
 
         <div class="sm:col-span-2">
             <label class="block text-sm font-medium mb-1">License key</label>
-            <input name="license_key" class="w-full border border-slate-300 rounded px-3 py-2" required>
+            <div class="flex gap-2">
+                <input id="license_key" name="license_key" class="w-full border border-slate-300 rounded px-3 py-2" placeholder="Laisser vide pour générer">
+                <button id="btn_generate_key" class="border border-slate-300 rounded px-3 py-2" type="button">Générer</button>
+            </div>
         </div>
         <div class="sm:col-span-2">
             <label class="block text-sm font-medium mb-1">Association (optionnel)</label>
             <input name="tenant_name" class="w-full border border-slate-300 rounded px-3 py-2">
+        </div>
+        <div class="sm:col-span-2">
+            <label class="block text-sm font-medium mb-1">Email (optionnel)</label>
+            <input name="tenant_email" type="email" class="w-full border border-slate-300 rounded px-3 py-2" placeholder="pour envoyer la clé">
         </div>
         <div>
             <label class="block text-sm font-medium mb-1">Type</label>
@@ -48,6 +55,35 @@ ob_start();
         </div>
     </form>
 </div>
+
+<script>
+    (function () {
+        var btn = document.getElementById('btn_generate_key');
+        var input = document.getElementById('license_key');
+        if (!btn || !input) return;
+
+        btn.addEventListener('click', async function () {
+            btn.disabled = true;
+            try {
+                var res = await fetch('/licenses/generate-key', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Accept': 'application/json'
+                    },
+                    body: '_csrf=' + encodeURIComponent('<?= e(Licensing\Support\Csrf::token()) ?>')
+                });
+
+                var data = await res.json();
+                if (data && data.license_key) {
+                    input.value = data.license_key;
+                }
+            } catch (e) {
+            }
+            btn.disabled = false;
+        });
+    })();
+</script>
 
 <div class="mt-6 bg-white border border-slate-200 rounded-lg overflow-hidden">
     <table class="w-full text-sm">
