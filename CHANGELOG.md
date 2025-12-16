@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0 - 2025-12-16
+- Mise à jour DB forcée : page /admin/update + blocage de l'application tant que les migrations ne sont pas appliquées
+- Trésorerie : filtres (période, recherche, type, catégorie) + totaux (dépenses/recettes/solde)
+- Trésorerie : actions dupliquer une transaction + pointage (toggle "pointée")
+- Licensing : génération automatique de clé + envoi optionnel par email
+- Changelog : accès réservé aux utilisateurs connectés
+
 ## 0.4.0 - 2025-12-12
 - Google Drive : OAuth (connexion/déconnexion) par association
 - Justificatifs : option de stockage sur Google Drive (si module drive activé)
