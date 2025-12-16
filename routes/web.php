@@ -33,6 +33,7 @@ $router->post('/admin/license', [AdminLicenseController::class, 'update']);
 $router->get('/treasury', [TreasuryController::class, 'index']);
 $router->get('/treasury/new', [TreasuryController::class, 'create']);
 $router->post('/treasury/new', [TreasuryController::class, 'store']);
+$router->post('/treasury/toggle-cleared', [TreasuryController::class, 'toggleCleared']);
 
 $router->get('/treasury/categories', [TreasuryCategoriesController::class, 'index']);
 $router->post('/treasury/categories', [TreasuryCategoriesController::class, 'store']);

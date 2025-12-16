@@ -97,7 +97,7 @@ $btnInactive = 'bg-white text-slate-900 hover:bg-slate-50';
             <th class="text-left p-3">Catégorie</th>
             <th class="text-right p-3">Dépenses</th>
             <th class="text-right p-3">Recettes</th>
-            <th class="text-right p-3">Justificatifs</th>
+            <th class="text-right p-3">Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -117,7 +117,37 @@ $btnInactive = 'bg-white text-slate-900 hover:bg-slate-50';
                     <?php endif; ?>
                 </td>
                 <td class="p-3 text-right">
-                    <a class="border border-slate-300 rounded px-2 py-1 text-xs" href="/treasury/attachments?transaction_id=<?= e((string)$t['id']) ?>">Voir</a>
+                    <div class="inline-flex items-center gap-2">
+                        <a class="border border-slate-300 rounded p-2 text-xs hover:bg-slate-50" href="/treasury/attachments?transaction_id=<?= e((string)$t['id']) ?>" title="Justificatifs">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.82-2.82l8.49-8.48"/>
+                            </svg>
+                        </a>
+
+                        <a class="border border-slate-300 rounded p-2 text-xs hover:bg-slate-50" href="/treasury/new?duplicate_id=<?= e((string)$t['id']) ?>" title="Dupliquer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                        </a>
+
+                        <form method="post" action="/treasury/toggle-cleared" class="inline">
+                            <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
+                            <input type="hidden" name="id" value="<?= e((string)$t['id']) ?>">
+                            <input type="hidden" name="return_to" value="<?= e((string)($_SERVER['REQUEST_URI'] ?? '/treasury')) ?>">
+                            <button class="border border-slate-300 rounded p-2 text-xs hover:bg-slate-50" type="submit" title="<?= ((int)($t['is_cleared'] ?? 0) === 1) ? 'Dépointée' : 'Pointée' ?>">
+                                <?php if ((int)($t['is_cleared'] ?? 0) === 1): ?>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-700">
+                                        <path d="M20 6 9 17l-5-5"/>
+                                    </svg>
+                                <?php else: ?>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-500">
+                                        <circle cx="12" cy="12" r="10"/>
+                                    </svg>
+                                <?php endif; ?>
+                            </button>
+                        </form>
+                    </div>
                 </td>
             </tr>
         <?php endforeach; ?>

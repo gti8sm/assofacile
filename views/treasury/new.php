@@ -2,6 +2,12 @@
 $title = 'Nouvelle transaction';
 ob_start();
 $defaultDate = date('Y-m-d');
+
+$vType = (string)($_POST['type'] ?? ($prefill['type'] ?? 'expense'));
+$vLabel = (string)($_POST['label'] ?? ($prefill['label'] ?? ''));
+$vAmount = (string)($_POST['amount'] ?? ($prefill['amount'] ?? ''));
+$vOccurredOn = (string)($_POST['occurred_on'] ?? ($prefill['occurred_on'] ?? $defaultDate));
+$vCategoryId = (string)($_POST['category_id'] ?? ($prefill['category_id'] ?? ''));
 ?>
 <div class="max-w-xl">
     <h1 class="text-2xl font-semibold">Nouvelle transaction</h1>
@@ -17,21 +23,21 @@ $defaultDate = date('Y-m-d');
         <div>
             <label class="block text-sm font-medium mb-1">Type</label>
             <select name="type" class="w-full border border-slate-300 rounded px-3 py-2">
-                <option value="expense">Dépense</option>
-                <option value="income">Recette</option>
+                <option value="expense" <?= ($vType === 'expense' ? 'selected' : '') ?>>Dépense</option>
+                <option value="income" <?= ($vType === 'income' ? 'selected' : '') ?>>Recette</option>
             </select>
         </div>
         <div>
             <label class="block text-sm font-medium mb-1">Libellé</label>
-            <input name="label" class="w-full border border-slate-300 rounded px-3 py-2" required>
+            <input name="label" value="<?= e($vLabel) ?>" class="w-full border border-slate-300 rounded px-3 py-2" required>
         </div>
         <div>
             <label class="block text-sm font-medium mb-1">Montant (€)</label>
-            <input name="amount" inputmode="decimal" class="w-full border border-slate-300 rounded px-3 py-2" placeholder="12,50" required>
+            <input name="amount" value="<?= e($vAmount) ?>" inputmode="decimal" class="w-full border border-slate-300 rounded px-3 py-2" placeholder="12,50" required>
         </div>
         <div>
             <label class="block text-sm font-medium mb-1">Date</label>
-            <input name="occurred_on" type="date" value="<?= e((string)($_POST['occurred_on'] ?? $defaultDate)) ?>" class="w-full border border-slate-300 rounded px-3 py-2" required>
+            <input name="occurred_on" type="date" value="<?= e($vOccurredOn) ?>" class="w-full border border-slate-300 rounded px-3 py-2" required>
         </div>
         <div>
             <div class="flex items-center justify-between">
@@ -41,7 +47,7 @@ $defaultDate = date('Y-m-d');
             <select name="category_id" class="w-full border border-slate-300 rounded px-3 py-2">
                 <option value="">—</option>
                 <?php foreach (($categories ?? []) as $c): ?>
-                    <option value="<?= e((string)$c['id']) ?>"><?= e((string)$c['name']) ?></option>
+                    <option value="<?= e((string)$c['id']) ?>" <?= ((string)$c['id'] === $vCategoryId ? 'selected' : '') ?>><?= e((string)$c['name']) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>

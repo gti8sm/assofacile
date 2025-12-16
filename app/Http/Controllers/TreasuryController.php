@@ -121,7 +121,7 @@ final class TreasuryController
         }
 
         $stmt = $pdo->prepare(
-            'SELECT tt.id, tt.type, tt.amount_cents, tt.label, tt.occurred_on, tc.name AS category_name
+            'SELECT tt.id, tt.type, tt.amount_cents, tt.label, tt.occurred_on, tt.is_cleared, tc.name AS category_name
              FROM treasury_transactions tt
              LEFT JOIN treasury_categories tc ON tc.id = tt.category_id
              WHERE ' . implode("\n               AND ", $where) . '
@@ -156,8 +156,65 @@ final class TreasuryController
         $stmt->execute(['tenant_id' => (int)$_SESSION['tenant_id']]);
         $categories = $stmt->fetchAll();
 
+        $prefill = [];
+        $duplicateId = (int)($_GET['duplicate_id'] ?? 0);
+        if ($duplicateId > 0) {
+            $stmt = $pdo->prepare('SELECT type, amount_cents, label, category_id FROM treasury_transactions WHERE id = :id AND tenant_id = :tenant_id');
+            $stmt->execute([
+                'id' => $duplicateId,
+                'tenant_id' => (int)$_SESSION['tenant_id'],
+            ]);
+            $src = $stmt->fetch();
+            if ($src) {
+                $prefill = [
+                    'type' => (string)$src['type'],
+                    'label' => (string)$src['label'],
+                    'amount' => number_format(((int)$src['amount_cents']) / 100, 2, ',', ''),
+                    'category_id' => $src['category_id'] !== null ? (string)$src['category_id'] : '',
+                    'occurred_on' => date('Y-m-d'),
+                ];
+            }
+        }
+
         $error = Session::flash('error');
         require base_path('views/treasury/new.php');
+    }
+
+    public static function toggleCleared(): void
+    {
+        self::guard();
+
+        $id = (int)($_POST['id'] ?? 0);
+        $returnTo = (string)($_POST['return_to'] ?? '/treasury');
+        if ($id <= 0) {
+            Session::flash('error', 'Transaction invalide.');
+            redirect('/treasury');
+        }
+
+        $pdo = Db::pdo();
+        $stmt = $pdo->prepare('SELECT is_cleared FROM treasury_transactions WHERE id = :id AND tenant_id = :tenant_id');
+        $stmt->execute([
+            'id' => $id,
+            'tenant_id' => (int)$_SESSION['tenant_id'],
+        ]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            Session::flash('error', 'Transaction introuvable.');
+            redirect('/treasury');
+        }
+
+        $isCleared = ((int)($row['is_cleared'] ?? 0) === 1);
+        $newCleared = $isCleared ? 0 : 1;
+
+        $stmt = $pdo->prepare('UPDATE treasury_transactions SET is_cleared = :is_cleared, cleared_at = :cleared_at WHERE id = :id AND tenant_id = :tenant_id');
+        $stmt->execute([
+            'is_cleared' => $newCleared,
+            'cleared_at' => $newCleared === 1 ? date('Y-m-d H:i:s') : null,
+            'id' => $id,
+            'tenant_id' => (int)$_SESSION['tenant_id'],
+        ]);
+
+        redirect(str_starts_with($returnTo, '/') ? $returnTo : '/treasury');
     }
 
     public static function store(): void
