@@ -15,6 +15,9 @@
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
         <a href="/dashboard" class="font-semibold">AssoFacile</a>
         <div class="flex items-center gap-3">
+            <?php if (isset($_SESSION['tenant_id'], $_SESSION['user_id']) && App\Support\Access::can((int)$_SESSION['tenant_id'], (int)$_SESSION['user_id'], 'members', 'read')): ?>
+                <a href="/members" class="text-sm text-slate-700 hover:text-slate-900">Adhérents</a>
+            <?php endif; ?>
             <?php if (isset($_SESSION['tenant_id'], $_SESSION['user_id']) && App\Support\Access::can((int)$_SESSION['tenant_id'], (int)$_SESSION['user_id'], 'treasury', 'read')): ?>
                 <a href="/treasury" class="text-sm text-slate-700 hover:text-slate-900">Trésorerie</a>
             <?php endif; ?>

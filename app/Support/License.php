@@ -9,7 +9,8 @@ use App\Database\Db;
 final class License
 {
     public const FREE_MODULES = [
-        // Core gratuit : pas de module payant ici.
+        // Core gratuit
+        'members',
     ];
 
     public static function graceDays(): int

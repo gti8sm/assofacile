@@ -14,6 +14,7 @@ use App\Http\Controllers\InstallController;
 use App\Http\Controllers\AdminLicenseController;
 use App\Http\Controllers\AdminUpdateController;
 use App\Http\Controllers\AdminAccessController;
+use App\Http\Controllers\MembersController;
 
 $router->get('/', [DashboardController::class, 'index']);
 
@@ -55,5 +56,11 @@ $router->get('/treasury/attachment/download', [TreasuryAttachmentsController::cl
 $router->get('/drive/connect', [DriveController::class, 'connect']);
 $router->get('/drive/callback', [DriveController::class, 'callback']);
 $router->post('/drive/disconnect', [DriveController::class, 'disconnect']);
+
+$router->get('/members', [MembersController::class, 'index']);
+$router->get('/members/new', [MembersController::class, 'create']);
+$router->post('/members/new', [MembersController::class, 'store']);
+$router->get('/members/edit', [MembersController::class, 'edit']);
+$router->post('/members/edit', [MembersController::class, 'update']);
 
 $router->get('/changelog', [ChangelogController::class, 'index']);
