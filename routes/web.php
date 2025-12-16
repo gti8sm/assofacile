@@ -12,6 +12,7 @@ use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\AdminModulesController;
 use App\Http\Controllers\InstallController;
 use App\Http\Controllers\AdminLicenseController;
+use App\Http\Controllers\AdminUpdateController;
 
 $router->get('/', [DashboardController::class, 'index']);
 
@@ -26,6 +27,9 @@ $router->get('/dashboard', [DashboardController::class, 'index']);
 
 $router->get('/admin/modules', [AdminModulesController::class, 'index']);
 $router->post('/admin/modules', [AdminModulesController::class, 'update']);
+
+$router->get('/admin/update', [AdminUpdateController::class, 'index']);
+$router->post('/admin/update', [AdminUpdateController::class, 'run']);
 
 $router->get('/admin/license', [AdminLicenseController::class, 'index']);
 $router->post('/admin/license', [AdminLicenseController::class, 'update']);
