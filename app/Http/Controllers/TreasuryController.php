@@ -31,6 +31,10 @@ final class TreasuryController
         $from = '';
         $to = '';
 
+        $q = trim((string)($_GET['q'] ?? ''));
+        $typeFilter = (string)($_GET['type'] ?? '');
+        $categoryIdFilter = (string)($_GET['category_id'] ?? '');
+
         $today = new \DateTimeImmutable('today');
         if ($period === 'prev_month') {
             $start = $today->modify('first day of last month');
@@ -58,22 +62,73 @@ final class TreasuryController
             $to = $end->format('Y-m-d');
         }
 
+        if (!in_array($typeFilter, ['', 'expense', 'income'], true)) {
+            $typeFilter = '';
+        }
+
+        $categoryIdInt = null;
+        if ($categoryIdFilter !== '') {
+            $tmp = (int)$categoryIdFilter;
+            if ($tmp > 0) {
+                $categoryIdInt = $tmp;
+            }
+        }
+
         $pdo = Db::pdo();
+
+        $stmt = $pdo->prepare('SELECT id, name FROM treasury_categories WHERE tenant_id = :tenant_id ORDER BY name ASC');
+        $stmt->execute(['tenant_id' => (int)$_SESSION['tenant_id']]);
+        $categories = $stmt->fetchAll();
+
+        if ($categoryIdInt !== null) {
+            $exists = false;
+            foreach ($categories as $c) {
+                if ((int)($c['id'] ?? 0) === $categoryIdInt) {
+                    $exists = true;
+                    break;
+                }
+            }
+            if (!$exists) {
+                $categoryIdInt = null;
+                $categoryIdFilter = '';
+            }
+        }
+
+        $where = [
+            'tt.tenant_id = :tenant_id',
+            'tt.occurred_on >= :from',
+            'tt.occurred_on <= :to',
+        ];
+        $params = [
+            'tenant_id' => (int)$_SESSION['tenant_id'],
+            'from' => $from,
+            'to' => $to,
+        ];
+
+        if ($q !== '') {
+            $where[] = 'tt.label LIKE :q';
+            $params['q'] = '%' . $q . '%';
+        }
+
+        if ($typeFilter !== '') {
+            $where[] = 'tt.type = :type';
+            $params['type'] = $typeFilter;
+        }
+
+        if ($categoryIdInt !== null) {
+            $where[] = 'tt.category_id = :category_id';
+            $params['category_id'] = $categoryIdInt;
+        }
+
         $stmt = $pdo->prepare(
             'SELECT tt.id, tt.type, tt.amount_cents, tt.label, tt.occurred_on, tc.name AS category_name
              FROM treasury_transactions tt
              LEFT JOIN treasury_categories tc ON tc.id = tt.category_id
-             WHERE tt.tenant_id = :tenant_id
-               AND tt.occurred_on >= :from
-               AND tt.occurred_on <= :to
+             WHERE ' . implode("\n               AND ", $where) . '
              ORDER BY tt.occurred_on DESC, tt.id DESC
              LIMIT 100'
         );
-        $stmt->execute([
-            'tenant_id' => (int)$_SESSION['tenant_id'],
-            'from' => $from,
-            'to' => $to,
-        ]);
+        $stmt->execute($params);
         $transactions = $stmt->fetchAll();
 
         $totalExpenseCents = 0;

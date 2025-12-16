@@ -21,6 +21,9 @@ ob_start();
 $activePeriod = (string)($_GET['period'] ?? 'month');
 $from = (string)($_GET['from'] ?? '');
 $to = (string)($_GET['to'] ?? '');
+$q = (string)($_GET['q'] ?? '');
+$type = (string)($_GET['type'] ?? '');
+$categoryId = (string)($_GET['category_id'] ?? '');
 $btnBase = 'border border-slate-300 rounded px-3 py-2 text-sm';
 $btnActive = 'bg-slate-900 text-white border-slate-900';
 $btnInactive = 'bg-white text-slate-900 hover:bg-slate-50';
@@ -43,6 +46,27 @@ $btnInactive = 'bg-white text-slate-900 hover:bg-slate-50';
             <div>
                 <label class="block text-xs text-slate-600">Au</label>
                 <input name="to" type="date" value="<?= e($to) ?>" class="border border-slate-300 rounded px-2 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs text-slate-600">Type</label>
+                <select name="type" class="border border-slate-300 rounded px-2 py-2 text-sm">
+                    <option value="" <?= ($type === '' ? 'selected' : '') ?>>Tout</option>
+                    <option value="expense" <?= ($type === 'expense' ? 'selected' : '') ?>>Dépenses</option>
+                    <option value="income" <?= ($type === 'income' ? 'selected' : '') ?>>Recettes</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs text-slate-600">Catégorie</label>
+                <select name="category_id" class="border border-slate-300 rounded px-2 py-2 text-sm">
+                    <option value="" <?= ($categoryId === '' ? 'selected' : '') ?>>Toutes</option>
+                    <?php foreach (($categories ?? []) as $c): ?>
+                        <option value="<?= e((string)$c['id']) ?>" <?= ((string)$c['id'] === $categoryId ? 'selected' : '') ?>><?= e((string)$c['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs text-slate-600">Recherche</label>
+                <input name="q" value="<?= e($q) ?>" class="border border-slate-300 rounded px-2 py-2 text-sm" placeholder="libellé">
             </div>
             <button class="bg-slate-900 text-white rounded px-3 py-2 text-sm" type="submit">OK</button>
         </form>
