@@ -15,11 +15,12 @@
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
         <a href="/dashboard" class="font-semibold">AssoFacile</a>
         <div class="flex items-center gap-3">
-            <?php if (isset($_SESSION['tenant_id']) && App\Support\Modules::isEnabled((int)$_SESSION['tenant_id'], 'treasury')): ?>
+            <?php if (isset($_SESSION['tenant_id'], $_SESSION['user_id']) && App\Support\Access::can((int)$_SESSION['tenant_id'], (int)$_SESSION['user_id'], 'treasury', 'read')): ?>
                 <a href="/treasury" class="text-sm text-slate-700 hover:text-slate-900">Trésorerie</a>
             <?php endif; ?>
             <?php if (isset($_SESSION['is_admin']) && (int)$_SESSION['is_admin'] === 1): ?>
                 <a href="/admin/modules" class="text-sm text-slate-700 hover:text-slate-900">Admin</a>
+                <a href="/admin/access" class="text-sm text-slate-700 hover:text-slate-900">Accès</a>
                 <a href="/admin/license" class="text-sm text-slate-700 hover:text-slate-900">Licence</a>
             <?php endif; ?>
             <a href="/changelog" class="text-sm text-slate-700 hover:text-slate-900">Changelog</a>

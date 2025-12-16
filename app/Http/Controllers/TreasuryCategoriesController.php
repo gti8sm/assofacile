@@ -5,22 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Database\Db;
-use App\Support\Modules;
+use App\Support\Access;
 use App\Support\Session;
 
 final class TreasuryCategoriesController
 {
     private static function guard(): void
     {
-        if (!isset($_SESSION['user_id'], $_SESSION['tenant_id'])) {
-            redirect('/login');
-        }
-
-        if (!Modules::isEnabled((int)$_SESSION['tenant_id'], 'treasury')) {
-            http_response_code(403);
-            echo '403';
-            exit;
-        }
+        Access::require('treasury', 'read');
     }
 
     public static function index(): void
@@ -39,7 +31,7 @@ final class TreasuryCategoriesController
 
     public static function store(): void
     {
-        self::guard();
+        Access::require('treasury', 'write');
 
         $name = trim((string)($_POST['name'] ?? ''));
         if ($name === '') {

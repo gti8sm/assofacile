@@ -6,21 +6,13 @@ namespace App\Http\Controllers;
 
 use App\Database\Db;
 use App\Support\Session;
-use App\Support\Modules;
+use App\Support\Access;
 
 final class TreasuryController
 {
     private static function guard(): void
     {
-        if (!isset($_SESSION['user_id'], $_SESSION['tenant_id'])) {
-            redirect('/login');
-        }
-
-        if (!Modules::isEnabled((int)$_SESSION['tenant_id'], 'treasury')) {
-            http_response_code(403);
-            echo '403';
-            exit;
-        }
+        Access::require('treasury', 'read');
     }
 
     public static function index(): void
@@ -149,7 +141,7 @@ final class TreasuryController
 
     public static function create(): void
     {
-        self::guard();
+        Access::require('treasury', 'read');
 
         $pdo = Db::pdo();
         $stmt = $pdo->prepare('SELECT id, name FROM treasury_categories WHERE tenant_id = :tenant_id ORDER BY name ASC');
@@ -182,7 +174,7 @@ final class TreasuryController
 
     public static function toggleCleared(): void
     {
-        self::guard();
+        Access::require('treasury', 'write');
 
         $id = (int)($_POST['id'] ?? 0);
         $returnTo = (string)($_POST['return_to'] ?? '/treasury');
@@ -219,7 +211,7 @@ final class TreasuryController
 
     public static function store(): void
     {
-        self::guard();
+        Access::require('treasury', 'write');
 
         $type = (string)($_POST['type'] ?? 'expense');
         $label = trim((string)($_POST['label'] ?? ''));
@@ -286,7 +278,7 @@ final class TreasuryController
 
     public static function exportCsv(): void
     {
-        self::guard();
+        Access::require('treasury', 'read');
 
         $pdo = Db::pdo();
         $stmt = $pdo->prepare(

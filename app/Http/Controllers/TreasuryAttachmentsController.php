@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Database\Db;
-use App\Support\Modules;
+use App\Support\Access;
 use App\Support\Session;
 use App\Support\Storage;
 use App\Support\GoogleDrive;
@@ -16,15 +16,7 @@ final class TreasuryAttachmentsController
 
     private static function guard(): void
     {
-        if (!isset($_SESSION['user_id'], $_SESSION['tenant_id'])) {
-            redirect('/login');
-        }
-
-        if (!Modules::isEnabled((int)$_SESSION['tenant_id'], 'treasury')) {
-            http_response_code(403);
-            echo '403';
-            exit;
-        }
+        Access::require('treasury', 'read');
     }
 
     public static function index(): void
@@ -66,7 +58,7 @@ final class TreasuryAttachmentsController
 
     public static function store(): void
     {
-        self::guard();
+        Access::require('treasury', 'write');
 
         $transactionId = (int)($_POST['transaction_id'] ?? 0);
         if ($transactionId <= 0) {
@@ -218,7 +210,7 @@ final class TreasuryAttachmentsController
 
     public static function download(): void
     {
-        self::guard();
+        Access::require('treasury', 'read');
 
         $attachmentId = (int)($_GET['id'] ?? 0);
         if ($attachmentId <= 0) {

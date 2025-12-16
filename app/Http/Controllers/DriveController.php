@@ -5,22 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Support\GoogleDrive;
-use App\Support\Modules;
+use App\Support\Access;
 use App\Support\Session;
 
 final class DriveController
 {
     private static function guard(): void
     {
-        if (!isset($_SESSION['user_id'], $_SESSION['tenant_id'])) {
-            redirect('/login');
-        }
-
-        if (!Modules::isEnabled((int)$_SESSION['tenant_id'], 'drive')) {
-            http_response_code(403);
-            echo '403';
-            exit;
-        }
+        Access::require('drive', 'write');
     }
 
     public static function connect(): void
