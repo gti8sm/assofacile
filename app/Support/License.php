@@ -9,7 +9,7 @@ use App\Database\Db;
 final class License
 {
     public const FREE_MODULES = [
-        'treasury',
+        // Core gratuit : pas de module payant ici.
     ];
 
     public static function graceDays(): int
@@ -22,6 +22,45 @@ final class License
     public static function isModuleFree(string $moduleKey): bool
     {
         return in_array($moduleKey, self::FREE_MODULES, true);
+    }
+
+    public static function isModuleAllowed(int $tenantId, string $moduleKey): bool
+    {
+        if ($tenantId <= 0 || $moduleKey === '') {
+            return false;
+        }
+
+        if (self::isModuleFree($moduleKey)) {
+            return true;
+        }
+
+        $row = self::getLicenseRow($tenantId);
+        if (!$row) {
+            return false;
+        }
+
+        $payload = self::getSignedTokenPayloadIfValid($row);
+        if (is_array($payload)) {
+            $status = (string)($payload['status'] ?? 'unknown');
+            if ($status !== 'active') {
+                return false;
+            }
+
+            $ent = $payload['entitlements'] ?? null;
+            if (is_array($ent) && isset($ent[$moduleKey]) && is_array($ent[$moduleKey])) {
+                $validUntil = (string)($ent[$moduleKey]['valid_until'] ?? '');
+                if ($validUntil !== '') {
+                    return self::isDateInFuture($validUntil);
+                }
+                return false;
+            }
+
+            // Compat legacy: token valide mais sans entitlements => ancien modèle "licence globale"
+            return true;
+        }
+
+        // Compat legacy: si l'app n'a pas de token signé exploitable, on retombe sur l'ancien mécanisme.
+        return self::isPaidFeatureAllowed($tenantId);
     }
 
     public static function isPaidFeatureAllowed(int $tenantId): bool
@@ -75,6 +114,28 @@ final class License
         }
 
         return self::verifyEd25519Token($token, $pub);
+    }
+
+    /** @param array<string,mixed> $row @return array<string,mixed>|null */
+    private static function getSignedTokenPayloadIfValid(array $row): ?array
+    {
+        if (!self::isSignedTokenValid($row)) {
+            return null;
+        }
+
+        $token = (string)($row['signed_token'] ?? '');
+        $parts = explode('.', $token);
+        if (count($parts) !== 3) {
+            return null;
+        }
+
+        $payloadJson = self::b64urlDecode($parts[1]);
+        if ($payloadJson === false || $payloadJson === '') {
+            return null;
+        }
+
+        $payload = json_decode($payloadJson, true);
+        return is_array($payload) ? $payload : null;
     }
 
     private static function verifyEd25519Token(string $token, string $publicKeyB64): bool

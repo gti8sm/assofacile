@@ -49,6 +49,7 @@ final class ApiLicensesController
         $status = 'invalid';
         $planType = null;
         $validUntil = null;
+        $entitlements = [];
 
         if ($lic) {
             $planType = (string)$lic['plan_type'];
@@ -56,12 +57,42 @@ final class ApiLicensesController
 
             if ((int)$lic['is_revoked'] === 1) {
                 $status = 'revoked';
-            } elseif ($planType === 'lifetime') {
-                $status = 'active';
-            } elseif ($validUntil !== null && strtotime($validUntil . ' 23:59:59') !== false && strtotime($validUntil . ' 23:59:59') >= time()) {
-                $status = 'active';
             } else {
-                $status = 'expired';
+                $stmt = $pdo->prepare(
+                    'SELECT mc.module_key, lms.billing_period, lms.valid_until
+                     FROM license_module_subscriptions lms
+                     INNER JOIN modules_catalog mc ON mc.id = lms.module_id
+                     WHERE lms.license_id = :license_id AND lms.is_active = 1'
+                );
+                $stmt->execute(['license_id' => (int)$lic['id']]);
+                $subs = $stmt->fetchAll();
+
+                $hasValidEntitlement = false;
+                foreach ($subs as $s) {
+                    $mk = (string)$s['module_key'];
+                    $vu = (string)$s['valid_until'];
+                    if ($mk === '' || $vu === '') {
+                        continue;
+                    }
+
+                    $entitlements[$mk] = [
+                        'billing_period' => (string)$s['billing_period'],
+                        'valid_until' => $vu,
+                    ];
+
+                    $ts = strtotime($vu . ' 23:59:59');
+                    if ($ts !== false && $ts >= time()) {
+                        $hasValidEntitlement = true;
+                    }
+                }
+
+                if ($planType === 'lifetime') {
+                    $status = 'active';
+                } elseif ($hasValidEntitlement) {
+                    $status = 'active';
+                } else {
+                    $status = 'expired';
+                }
             }
 
             $stmt = $pdo->prepare('INSERT INTO license_checks (license_id, checked_at, requester_ip, app_url, app_version, status) VALUES (:license_id, NOW(), :ip, :app_url, :app_version, :status)');
@@ -74,15 +105,26 @@ final class ApiLicensesController
             ]);
         }
 
-        $tokenValidUntil = $status === 'active'
-            ? ($planType === 'lifetime' ? date('Y-m-d', strtotime('+10 years')) : (string)$validUntil)
-            : date('Y-m-d', strtotime('+7 days'));
+        $tokenValidUntil = date('Y-m-d', strtotime('+7 days'));
+        if ($status === 'active') {
+            $tokenValidUntil = $planType === 'lifetime'
+                ? date('Y-m-d', strtotime('+10 years'))
+                : (string)($validUntil ?: date('Y-m-d', strtotime('+30 days')));
+
+            foreach ($entitlements as $e) {
+                $vu = (string)($e['valid_until'] ?? '');
+                if ($vu !== '' && strtotime($vu . ' 23:59:59') !== false && strtotime($vu . ' 23:59:59') > strtotime($tokenValidUntil . ' 23:59:59')) {
+                    $tokenValidUntil = $vu;
+                }
+            }
+        }
 
         $payload = [
             'license_key' => $licenseKey,
             'tenant_id' => $tenantId,
             'status' => $status,
             'plan_type' => $planType,
+            'entitlements' => $entitlements,
         ];
 
         try {
@@ -97,6 +139,7 @@ final class ApiLicensesController
             'status' => $status,
             'plan_type' => $planType,
             'valid_until' => $validUntil,
+            'entitlements' => $entitlements,
             'signed_token' => $signedToken,
             'token_valid_until' => $tokenValidUntil,
             'public_key_b64' => (string)(Env::get('LICENSE_PUBLIC_KEY_B64', '') ?? ''),
