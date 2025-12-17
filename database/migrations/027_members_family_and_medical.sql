@@ -1,0 +1,67 @@
+CREATE TABLE households (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  tenant_id INT UNSIGNED NOT NULL,
+  name VARCHAR(190) NULL,
+  address TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_households_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  INDEX idx_households_tenant (tenant_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE members
+  ADD COLUMN household_id INT UNSIGNED NULL AFTER tenant_id,
+  ADD COLUMN birth_date DATE NULL AFTER last_name,
+  ADD COLUMN relationship VARCHAR(32) NOT NULL DEFAULT 'adult' AFTER address,
+  ADD COLUMN use_household_address TINYINT(1) NOT NULL DEFAULT 0 AFTER relationship,
+  ADD CONSTRAINT fk_members_household FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE SET NULL,
+  ADD INDEX idx_members_household (tenant_id, household_id);
+
+CREATE TABLE member_medical_profiles (
+  member_id INT UNSIGNED NOT NULL,
+  allergies TEXT NULL,
+  medical_notes TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (member_id),
+  CONSTRAINT fk_medical_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE member_authorized_pickups (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  member_id INT UNSIGNED NOT NULL,
+  name VARCHAR(190) NOT NULL,
+  phone VARCHAR(64) NULL,
+  relation VARCHAR(64) NULL,
+  notes TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_pickups_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+  INDEX idx_pickups_member (member_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE child_groups (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  tenant_id INT UNSIGNED NOT NULL,
+  name VARCHAR(190) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_child_groups_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  INDEX idx_child_groups_tenant (tenant_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE child_group_members (
+  group_id INT UNSIGNED NOT NULL,
+  member_id INT UNSIGNED NOT NULL,
+  PRIMARY KEY (group_id, member_id),
+  CONSTRAINT fk_cgm_group FOREIGN KEY (group_id) REFERENCES child_groups(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cgm_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE child_group_staff (
+  group_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  PRIMARY KEY (group_id, user_id),
+  CONSTRAINT fk_cgs_group FOREIGN KEY (group_id) REFERENCES child_groups(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cgs_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

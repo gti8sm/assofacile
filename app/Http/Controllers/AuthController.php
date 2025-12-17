@@ -31,7 +31,7 @@ final class AuthController
         }
 
         $pdo = Db::pdo();
-        $stmt = $pdo->prepare('SELECT id, tenant_id, password_hash, is_active, is_admin FROM users WHERE email = :email LIMIT 1');
+        $stmt = $pdo->prepare('SELECT id, tenant_id, password_hash, is_active, is_admin, role FROM users WHERE email = :email LIMIT 1');
         $stmt->execute(['email' => $email]);
         $user = $stmt->fetch();
 
@@ -45,6 +45,7 @@ final class AuthController
         $_SESSION['user_id'] = (int)$user['id'];
         $_SESSION['tenant_id'] = (int)$user['tenant_id'];
         $_SESSION['is_admin'] = (int)($user['is_admin'] ?? 0);
+        $_SESSION['role'] = (string)($user['role'] ?? 'member');
 
         redirect('/dashboard');
     }

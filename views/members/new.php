@@ -27,6 +27,10 @@ ob_start();
             <input name="last_name" value="<?= e((string)($_POST['last_name'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2">
         </div>
         <div>
+            <label class="block text-sm font-medium mb-1">Date de naissance</label>
+            <input name="birth_date" type="date" value="<?= e((string)($_POST['birth_date'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2">
+        </div>
+        <div>
             <label class="block text-sm font-medium mb-1">Email</label>
             <input name="email" type="email" value="<?= e((string)($_POST['email'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2">
         </div>

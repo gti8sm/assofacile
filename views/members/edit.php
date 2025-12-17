@@ -34,6 +34,10 @@ ob_start();
             <input name="last_name" value="<?= e((string)($member['last_name'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2">
         </div>
         <div>
+            <label class="block text-sm font-medium mb-1">Date de naissance</label>
+            <input name="birth_date" type="date" value="<?= e((string)($member['birth_date'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2">
+        </div>
+        <div>
             <label class="block text-sm font-medium mb-1">Email</label>
             <input name="email" type="email" value="<?= e((string)($member['email'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2">
         </div>
@@ -64,6 +68,22 @@ ob_start();
             <label class="block text-sm font-medium mb-1">Notes</label>
             <textarea name="notes" class="w-full border border-slate-300 rounded px-3 py-2" rows="3"><?= e((string)($member['notes'] ?? '')) ?></textarea>
         </div>
+
+        <?php if (!empty($canMedical)): ?>
+            <div class="sm:col-span-2 border-t border-slate-200 pt-4">
+                <h2 class="text-sm font-semibold text-slate-900">Infos médicales (enfant)</h2>
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium mb-1">Allergies</label>
+                        <textarea name="medical_allergies" class="w-full border border-slate-300 rounded px-3 py-2" rows="2"><?= e((string)($medical['allergies'] ?? '')) ?></textarea>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium mb-1">Notes médicales</label>
+                        <textarea name="medical_notes" class="w-full border border-slate-300 rounded px-3 py-2" rows="3"><?= e((string)($medical['medical_notes'] ?? '')) ?></textarea>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 
     <button class="bg-slate-900 text-white rounded px-3 py-2 text-sm" type="submit">Enregistrer</button>
