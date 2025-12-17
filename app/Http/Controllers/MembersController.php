@@ -165,6 +165,18 @@ final class MembersController
             $medical = $stmt->fetch();
         }
 
+        $pickups = [];
+        if ($canMedical && (string)($member['relationship'] ?? 'adult') === 'child') {
+            $stmt = $pdo->prepare(
+                'SELECT id, name, phone, relation, notes
+                 FROM member_authorized_pickups
+                 WHERE member_id = :member_id
+                 ORDER BY id DESC'
+            );
+            $stmt->execute(['member_id' => (int)$member['id']]);
+            $pickups = $stmt->fetchAll();
+        }
+
         $error = Session::flash('error');
         $flash = Session::flash('success');
         require base_path('views/members/edit.php');

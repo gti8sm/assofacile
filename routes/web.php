@@ -16,6 +16,7 @@ use App\Http\Controllers\AdminUpdateController;
 use App\Http\Controllers\AdminAccessController;
 use App\Http\Controllers\MembersController;
 use App\Http\Controllers\HouseholdsController;
+use App\Http\Controllers\MemberPickupsController;
 
 $router->get('/', [DashboardController::class, 'index']);
 
@@ -63,6 +64,9 @@ $router->get('/members/new', [MembersController::class, 'create']);
 $router->post('/members/new', [MembersController::class, 'store']);
 $router->get('/members/edit', [MembersController::class, 'edit']);
 $router->post('/members/edit', [MembersController::class, 'update']);
+
+$router->post('/members/pickups/new', [MemberPickupsController::class, 'store']);
+$router->post('/members/pickups/delete', [MemberPickupsController::class, 'delete']);
 
 $router->get('/households', [HouseholdsController::class, 'index']);
 $router->get('/households/new', [HouseholdsController::class, 'create']);

@@ -110,6 +110,68 @@ ob_start();
                     </div>
                 </div>
             </div>
+
+            <?php if ((string)($member['relationship'] ?? 'adult') === 'child'): ?>
+                <div class="sm:col-span-2 border-t border-slate-200 pt-4">
+                    <h2 class="text-sm font-semibold text-slate-900">Personnes habilitées à récupérer</h2>
+
+                    <div class="mt-3 bg-slate-50 border border-slate-200 rounded p-3">
+                        <div class="text-xs text-slate-500">Ajout rapide</div>
+                        <div class="mt-2 grid grid-cols-1 sm:grid-cols-4 gap-2">
+                            <input form="pickup-add" name="name" placeholder="Nom" class="w-full border border-slate-300 rounded px-3 py-2">
+                            <input form="pickup-add" name="phone" placeholder="Téléphone" class="w-full border border-slate-300 rounded px-3 py-2">
+                            <input form="pickup-add" name="relation" placeholder="Lien" class="w-full border border-slate-300 rounded px-3 py-2">
+                            <button form="pickup-add" class="bg-slate-900 text-white rounded px-3 py-2 text-sm" type="submit">Ajouter</button>
+                        </div>
+                        <textarea form="pickup-add" name="notes" placeholder="Notes" class="mt-2 w-full border border-slate-300 rounded px-3 py-2" rows="2"></textarea>
+                        <form id="pickup-add" method="post" action="/members/pickups/new" class="hidden">
+                            <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
+                            <input type="hidden" name="member_id" value="<?= e((string)$member['id']) ?>">
+                        </form>
+                    </div>
+
+                    <div class="mt-3 bg-white border border-slate-200 rounded-lg overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-50">
+                            <tr>
+                                <th class="text-left p-3">Nom</th>
+                                <th class="text-left p-3">Téléphone</th>
+                                <th class="text-left p-3">Lien</th>
+                                <th class="text-right p-3">Action</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php if (empty($pickups)): ?>
+                                <tr>
+                                    <td class="p-3 text-slate-500" colspan="4">Aucune personne habilitée.</td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach (($pickups ?? []) as $p): ?>
+                                    <tr class="border-t border-slate-200">
+                                        <td class="p-3">
+                                            <div class="font-medium"><?= e((string)($p['name'] ?? '')) ?></div>
+                                            <?php if (!empty($p['notes'])): ?>
+                                                <div class="text-xs text-slate-500 whitespace-pre-line"><?= e((string)$p['notes']) ?></div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="p-3"><?= e((string)($p['phone'] ?? '')) ?></td>
+                                        <td class="p-3"><?= e((string)($p['relation'] ?? '')) ?></td>
+                                        <td class="p-3 text-right">
+                                            <form method="post" action="/members/pickups/delete" onsubmit="return confirm('Supprimer ?');">
+                                                <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
+                                                <input type="hidden" name="member_id" value="<?= e((string)$member['id']) ?>">
+                                                <input type="hidden" name="id" value="<?= e((string)($p['id'] ?? '0')) ?>">
+                                                <button class="border border-slate-300 rounded px-3 py-2 text-sm" type="submit">Supprimer</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
     </div>
 
