@@ -17,6 +17,7 @@ use App\Http\Controllers\AdminAccessController;
 use App\Http\Controllers\MembersController;
 use App\Http\Controllers\HouseholdsController;
 use App\Http\Controllers\MemberPickupsController;
+use App\Http\Controllers\ChildGroupsController;
 
 $router->get('/', [DashboardController::class, 'index']);
 
@@ -73,5 +74,11 @@ $router->get('/households/new', [HouseholdsController::class, 'create']);
 $router->post('/households/new', [HouseholdsController::class, 'store']);
 $router->get('/households/edit', [HouseholdsController::class, 'edit']);
 $router->post('/households/edit', [HouseholdsController::class, 'update']);
+
+$router->get('/child-groups', [ChildGroupsController::class, 'index']);
+$router->get('/child-groups/new', [ChildGroupsController::class, 'create']);
+$router->post('/child-groups/new', [ChildGroupsController::class, 'store']);
+$router->get('/child-groups/edit', [ChildGroupsController::class, 'edit']);
+$router->post('/child-groups/edit', [ChildGroupsController::class, 'update']);
 
 $router->get('/changelog', [ChangelogController::class, 'index']);

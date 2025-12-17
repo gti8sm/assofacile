@@ -18,6 +18,7 @@
             <?php if (isset($_SESSION['tenant_id'], $_SESSION['user_id']) && App\Support\Access::can((int)$_SESSION['tenant_id'], (int)$_SESSION['user_id'], 'members', 'read')): ?>
                 <a href="/members" class="text-sm text-slate-700 hover:text-slate-900">Adhérents</a>
                 <a href="/households" class="text-sm text-slate-700 hover:text-slate-900">Familles</a>
+                <a href="/child-groups" class="text-sm text-slate-700 hover:text-slate-900">Groupes enfants</a>
             <?php endif; ?>
             <?php if (isset($_SESSION['tenant_id'], $_SESSION['user_id']) && App\Support\Access::can((int)$_SESSION['tenant_id'], (int)$_SESSION['user_id'], 'treasury', 'read')): ?>
                 <a href="/treasury" class="text-sm text-slate-700 hover:text-slate-900">Trésorerie</a>
