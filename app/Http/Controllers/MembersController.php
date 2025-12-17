@@ -75,6 +75,7 @@ final class MembersController
         $phone = trim((string)($_POST['phone'] ?? ''));
         $memberSince = trim((string)($_POST['member_since'] ?? ''));
         $paidUntil = trim((string)($_POST['membership_paid_until'] ?? ''));
+        $address = trim((string)($_POST['address'] ?? ''));
         $notes = trim((string)($_POST['notes'] ?? ''));
 
         if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
@@ -100,8 +101,8 @@ final class MembersController
         $pdo = Db::pdo();
         try {
             $stmt = $pdo->prepare(
-                'INSERT INTO members (tenant_id, first_name, last_name, birth_date, email, phone, status, member_since, membership_paid_until, notes)
-                 VALUES (:tenant_id, :first_name, :last_name, :birth_date, :email, :phone, :status, :member_since, :membership_paid_until, :notes)'
+                'INSERT INTO members (tenant_id, first_name, last_name, birth_date, email, phone, address, status, member_since, membership_paid_until, notes)
+                 VALUES (:tenant_id, :first_name, :last_name, :birth_date, :email, :phone, :address, :status, :member_since, :membership_paid_until, :notes)'
             );
             $stmt->execute([
                 'tenant_id' => $tenantId,
@@ -110,6 +111,7 @@ final class MembersController
                 'birth_date' => ($birthDate !== '' ? $birthDate : null),
                 'email' => ($email !== '' ? $email : null),
                 'phone' => ($phone !== '' ? $phone : null),
+                'address' => ($address !== '' ? $address : null),
                 'status' => 'active',
                 'member_since' => ($memberSince !== '' ? $memberSince : null),
                 'membership_paid_until' => ($paidUntil !== '' ? $paidUntil : null),
@@ -152,6 +154,10 @@ final class MembersController
         $userId = (int)$_SESSION['user_id'];
         $canMedical = MedicalAccess::can($tenantId, $userId, (int)$member['id']);
 
+        $stmt = $pdo->prepare('SELECT id, name FROM households WHERE tenant_id = :tenant_id ORDER BY id DESC');
+        $stmt->execute(['tenant_id' => $tenantId]);
+        $households = $stmt->fetchAll();
+
         $medical = null;
         if ($canMedical) {
             $stmt = $pdo->prepare('SELECT allergies, medical_notes FROM member_medical_profiles WHERE member_id = :member_id LIMIT 1');
@@ -180,11 +186,15 @@ final class MembersController
         $first = trim((string)($_POST['first_name'] ?? ''));
         $last = trim((string)($_POST['last_name'] ?? ''));
         $birthDate = trim((string)($_POST['birth_date'] ?? ''));
+        $householdId = (int)($_POST['household_id'] ?? 0);
+        $relationship = (string)($_POST['relationship'] ?? 'adult');
+        $useHouseholdAddress = isset($_POST['use_household_address']) ? 1 : 0;
         $email = trim((string)($_POST['email'] ?? ''));
         $phone = trim((string)($_POST['phone'] ?? ''));
         $status = (string)($_POST['status'] ?? 'active');
         $memberSince = trim((string)($_POST['member_since'] ?? ''));
         $paidUntil = trim((string)($_POST['membership_paid_until'] ?? ''));
+        $address = trim((string)($_POST['address'] ?? ''));
         $notes = trim((string)($_POST['notes'] ?? ''));
 
         $allergies = trim((string)($_POST['medical_allergies'] ?? ''));
@@ -192,6 +202,10 @@ final class MembersController
 
         if (!in_array($status, ['active', 'inactive'], true)) {
             $status = 'active';
+        }
+
+        if (!in_array($relationship, ['adult', 'spouse', 'child'], true)) {
+            $relationship = 'adult';
         }
 
         if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
@@ -218,13 +232,28 @@ final class MembersController
         try {
             $pdo->beginTransaction();
 
+            if ($householdId > 0) {
+                $stmt = $pdo->prepare('SELECT id FROM households WHERE id = :id AND tenant_id = :tenant_id LIMIT 1');
+                $stmt->execute([
+                    'id' => $householdId,
+                    'tenant_id' => $tenantId,
+                ]);
+                if (!$stmt->fetch()) {
+                    $householdId = 0;
+                }
+            }
+
             $stmt = $pdo->prepare(
                 'UPDATE members
                  SET first_name = :first_name,
                      last_name = :last_name,
                      birth_date = :birth_date,
+                     household_id = :household_id,
+                     relationship = :relationship,
+                     use_household_address = :use_household_address,
                      email = :email,
                      phone = :phone,
+                     address = :address,
                      status = :status,
                      member_since = :member_since,
                      membership_paid_until = :membership_paid_until,
@@ -235,8 +264,12 @@ final class MembersController
                 'first_name' => ($first !== '' ? $first : null),
                 'last_name' => ($last !== '' ? $last : null),
                 'birth_date' => ($birthDate !== '' ? $birthDate : null),
+                'household_id' => ($householdId > 0 ? $householdId : null),
+                'relationship' => $relationship,
+                'use_household_address' => $useHouseholdAddress,
                 'email' => ($email !== '' ? $email : null),
                 'phone' => ($phone !== '' ? $phone : null),
+                'address' => ($address !== '' ? $address : null),
                 'status' => $status,
                 'member_since' => ($memberSince !== '' ? $memberSince : null),
                 'membership_paid_until' => ($paidUntil !== '' ? $paidUntil : null),

@@ -15,6 +15,7 @@ use App\Http\Controllers\AdminLicenseController;
 use App\Http\Controllers\AdminUpdateController;
 use App\Http\Controllers\AdminAccessController;
 use App\Http\Controllers\MembersController;
+use App\Http\Controllers\HouseholdsController;
 
 $router->get('/', [DashboardController::class, 'index']);
 
@@ -62,5 +63,11 @@ $router->get('/members/new', [MembersController::class, 'create']);
 $router->post('/members/new', [MembersController::class, 'store']);
 $router->get('/members/edit', [MembersController::class, 'edit']);
 $router->post('/members/edit', [MembersController::class, 'update']);
+
+$router->get('/households', [HouseholdsController::class, 'index']);
+$router->get('/households/new', [HouseholdsController::class, 'create']);
+$router->post('/households/new', [HouseholdsController::class, 'store']);
+$router->get('/households/edit', [HouseholdsController::class, 'edit']);
+$router->post('/households/edit', [HouseholdsController::class, 'update']);
 
 $router->get('/changelog', [ChangelogController::class, 'index']);

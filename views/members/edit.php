@@ -38,12 +38,35 @@ ob_start();
             <input name="birth_date" type="date" value="<?= e((string)($member['birth_date'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2">
         </div>
         <div>
+            <label class="block text-sm font-medium mb-1">Foyer</label>
+            <select name="household_id" class="w-full border border-slate-300 rounded px-3 py-2">
+                <option value="0">Aucun</option>
+                <?php foreach (($households ?? []) as $h): ?>
+                    <?php $hid = (int)($h['id'] ?? 0); ?>
+                    <option value="<?= e((string)$hid) ?>" <?= ((int)($member['household_id'] ?? 0) === $hid) ? 'selected' : '' ?>>
+                        <?= e((string)($h['name'] ?? '')) ?: ('Foyer #' . e((string)$hid)) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <div class="mt-1 text-xs text-slate-500">
+                <a class="underline" href="/households">Gérer les foyers</a>
+            </div>
+        </div>
+        <div>
             <label class="block text-sm font-medium mb-1">Email</label>
             <input name="email" type="email" value="<?= e((string)($member['email'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2">
         </div>
         <div>
             <label class="block text-sm font-medium mb-1">Téléphone</label>
             <input name="phone" value="<?= e((string)($member['phone'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2">
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Rôle (famille)</label>
+            <select name="relationship" class="w-full border border-slate-300 rounded px-3 py-2">
+                <option value="adult" <?= ((string)($member['relationship'] ?? 'adult') === 'adult') ? 'selected' : '' ?>>Adulte</option>
+                <option value="spouse" <?= ((string)($member['relationship'] ?? 'adult') === 'spouse') ? 'selected' : '' ?>>Conjoint(e)</option>
+                <option value="child" <?= ((string)($member['relationship'] ?? 'adult') === 'child') ? 'selected' : '' ?>>Enfant</option>
+            </select>
         </div>
         <div>
             <label class="block text-sm font-medium mb-1">Statut</label>
@@ -63,6 +86,10 @@ ob_start();
         <div class="sm:col-span-2">
             <label class="block text-sm font-medium mb-1">Adresse</label>
             <textarea name="address" class="w-full border border-slate-300 rounded px-3 py-2" rows="2"><?= e((string)($member['address'] ?? '')) ?></textarea>
+            <label class="mt-2 inline-flex items-center gap-2 text-sm">
+                <input type="checkbox" name="use_household_address" value="1" class="h-4 w-4" <?= ((int)($member['use_household_address'] ?? 0) === 1) ? 'checked' : '' ?>>
+                <span>Utiliser l'adresse du foyer</span>
+            </label>
         </div>
         <div class="sm:col-span-2">
             <label class="block text-sm font-medium mb-1">Notes</label>
