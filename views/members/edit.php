@@ -51,6 +51,12 @@ ob_start();
             <div class="mt-1 text-xs text-slate-500">
                 <a class="underline" href="/households">Gérer les foyers</a>
             </div>
+            <?php if (!empty($household)): ?>
+                <div class="mt-2 text-xs text-slate-600 whitespace-pre-line">
+                    <div class="text-slate-500">Adresse du foyer</div>
+                    <div><?= e((string)($household['address'] ?? '')) ?: '—' ?></div>
+                </div>
+            <?php endif; ?>
         </div>
         <div>
             <label class="block text-sm font-medium mb-1">Email</label>
@@ -90,6 +96,12 @@ ob_start();
                 <input type="checkbox" name="use_household_address" value="1" class="h-4 w-4" <?= ((int)($member['use_household_address'] ?? 0) === 1) ? 'checked' : '' ?>>
                 <span>Utiliser l'adresse du foyer</span>
             </label>
+            <?php if (((int)($member['use_household_address'] ?? 0) === 1) && isset($effectiveAddress)): ?>
+                <div class="mt-2 text-xs text-slate-600 whitespace-pre-line">
+                    <div class="text-slate-500">Adresse effective</div>
+                    <div><?= e((string)$effectiveAddress) ?: '—' ?></div>
+                </div>
+            <?php endif; ?>
         </div>
         <div class="sm:col-span-2">
             <label class="block text-sm font-medium mb-1">Notes</label>

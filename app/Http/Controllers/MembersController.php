@@ -158,6 +158,21 @@ final class MembersController
         $stmt->execute(['tenant_id' => $tenantId]);
         $households = $stmt->fetchAll();
 
+        $household = null;
+        if (!empty($member['household_id'])) {
+            $stmt = $pdo->prepare('SELECT id, name, address FROM households WHERE id = :id AND tenant_id = :tenant_id LIMIT 1');
+            $stmt->execute([
+                'id' => (int)$member['household_id'],
+                'tenant_id' => $tenantId,
+            ]);
+            $household = $stmt->fetch();
+        }
+
+        $effectiveAddress = (string)($member['address'] ?? '');
+        if (((int)($member['use_household_address'] ?? 0) === 1) && !empty($household)) {
+            $effectiveAddress = (string)($household['address'] ?? '');
+        }
+
         $medical = null;
         if ($canMedical) {
             $stmt = $pdo->prepare('SELECT allergies, medical_notes FROM member_medical_profiles WHERE member_id = :member_id LIMIT 1');
