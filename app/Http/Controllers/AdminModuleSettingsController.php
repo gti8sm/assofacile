@@ -45,6 +45,15 @@ final class AdminModuleSettingsController
         if ($moduleKey === 'members') {
             $settings['memberships_enabled'] = ModuleSettings::getBool($tenantId, 'members', 'memberships_enabled', true);
             $settings['memberships_create_treasury_income'] = ModuleSettings::getBool($tenantId, 'members', 'memberships_create_treasury_income', false);
+
+            $settings['helloasso_enabled'] = ModuleSettings::getBool($tenantId, 'members', 'helloasso_enabled', false);
+            $settings['helloasso_environment'] = ModuleSettings::getString($tenantId, 'members', 'helloasso_environment', 'prod');
+            if (!in_array($settings['helloasso_environment'], ['prod', 'sandbox'], true)) {
+                $settings['helloasso_environment'] = 'prod';
+            }
+            $settings['helloasso_organization_slug'] = ModuleSettings::getString($tenantId, 'members', 'helloasso_organization_slug', '');
+            $settings['helloasso_client_id'] = ModuleSettings::getString($tenantId, 'members', 'helloasso_client_id', '');
+            $settings['helloasso_client_secret'] = ModuleSettings::getString($tenantId, 'members', 'helloasso_client_secret', '');
         }
         if ($moduleKey === 'treasury') {
             $settings['analytics_enabled'] = ModuleSettings::getBool($tenantId, 'treasury', 'analytics_enabled', false);
@@ -82,6 +91,16 @@ final class AdminModuleSettingsController
             if ($moduleKey === 'members') {
                 ModuleSettings::setBool($tenantId, 'members', 'memberships_enabled', isset($_POST['memberships_enabled']));
                 ModuleSettings::setBool($tenantId, 'members', 'memberships_create_treasury_income', isset($_POST['memberships_create_treasury_income']));
+
+                ModuleSettings::setBool($tenantId, 'members', 'helloasso_enabled', isset($_POST['helloasso_enabled']));
+                $env = (string)($_POST['helloasso_environment'] ?? 'prod');
+                if (!in_array($env, ['prod', 'sandbox'], true)) {
+                    $env = 'prod';
+                }
+                ModuleSettings::setRaw($tenantId, 'members', 'helloasso_environment', json_encode($env));
+                ModuleSettings::setRaw($tenantId, 'members', 'helloasso_organization_slug', json_encode(trim((string)($_POST['helloasso_organization_slug'] ?? ''))));
+                ModuleSettings::setRaw($tenantId, 'members', 'helloasso_client_id', json_encode(trim((string)($_POST['helloasso_client_id'] ?? ''))));
+                ModuleSettings::setRaw($tenantId, 'members', 'helloasso_client_secret', json_encode(trim((string)($_POST['helloasso_client_secret'] ?? ''))));
             }
 
             if ($moduleKey === 'treasury') {

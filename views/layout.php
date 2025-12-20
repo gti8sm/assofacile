@@ -32,6 +32,7 @@
                 <a href="/admin/license" class="text-sm text-slate-700 hover:text-slate-900">Licence</a>
             <?php endif; ?>
             <a href="/changelog" class="text-sm text-slate-700 hover:text-slate-900">Changelog</a>
+            <a href="/roadmap" class="text-sm text-slate-700 hover:text-slate-900">Roadmap</a>
             <?php if (isset($_SESSION['user_id'])): ?>
                 <form method="post" action="/logout">
                     <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">

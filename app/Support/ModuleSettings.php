@@ -35,13 +35,26 @@ final class ModuleSettings
             $val = $row ? (string)($row['value_json'] ?? '') : null;
             $_SESSION['_module_settings'][$tenantId][$moduleKey][$settingKey] = $val;
         } catch (\Throwable $e) {
-            // Before migrations are applied, the tenant_module_settings table may not exist.
-            // In that case, fail soft and behave as if no setting was stored.
             $_SESSION['_module_settings'][$tenantId][$moduleKey][$settingKey] = null;
             return null;
         }
 
         return $val;
+    }
+
+    public static function getString(int $tenantId, string $moduleKey, string $settingKey, string $default): string
+    {
+        $raw = self::getRaw($tenantId, $moduleKey, $settingKey);
+        if ($raw === null || $raw === '') {
+            return $default;
+        }
+
+        $decoded = json_decode($raw, true);
+        if (is_string($decoded)) {
+            return $decoded;
+        }
+
+        return $default;
     }
 
     public static function getBool(int $tenantId, string $moduleKey, string $settingKey, bool $default): bool

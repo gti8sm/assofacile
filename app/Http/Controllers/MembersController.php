@@ -257,7 +257,7 @@ final class MembersController
         $membershipSubscriptions = [];
         try {
             $stmt = $pdo->prepare(
-                'SELECT ms.id, ms.amount_cents, ms.start_date, ms.end_date, ms.status, mp.label AS product_label
+                'SELECT ms.id, ms.amount_cents, ms.start_date, ms.end_date, ms.status, ms.payment_provider, mp.label AS product_label
                  FROM membership_subscriptions ms
                  LEFT JOIN membership_products mp ON mp.id = ms.product_id
                  WHERE ms.tenant_id = :tenant_id AND ms.member_id = :member_id

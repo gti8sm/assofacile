@@ -21,6 +21,8 @@ use App\Http\Controllers\MemberPickupsController;
 use App\Http\Controllers\ChildGroupsController;
 use App\Http\Controllers\MembershipProductsController;
 use App\Http\Controllers\MembershipSubscriptionsController;
+use App\Http\Controllers\HelloAssoController;
+use App\Http\Controllers\RoadmapController;
 
 $router->get('/', [DashboardController::class, 'index']);
 
@@ -92,5 +94,11 @@ $router->get('/memberships/products/new', [MembershipProductsController::class, 
 $router->post('/memberships/products/new', [MembershipProductsController::class, 'store']);
 
 $router->post('/memberships/subscriptions/new', [MembershipSubscriptionsController::class, 'store']);
+$router->post('/memberships/subscriptions/mark-paid', [MembershipSubscriptionsController::class, 'markPaid']);
+
+$router->post('/memberships/helloasso/pay', [HelloAssoController::class, 'payMembership']);
+$router->get('/memberships/helloasso/return', [HelloAssoController::class, 'return']);
+$router->post('/webhooks/helloasso', [HelloAssoController::class, 'webhook']);
 
 $router->get('/changelog', [ChangelogController::class, 'index']);
+$router->get('/roadmap', [RoadmapController::class, 'index']);

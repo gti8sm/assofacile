@@ -48,7 +48,7 @@ ob_start();
             <a class="text-sm underline" href="/memberships/products">Catalogue</a>
         </div>
 
-        <form method="post" action="/memberships/subscriptions/new" class="mt-3 grid grid-cols-1 sm:grid-cols-5 gap-2">
+        <form method="post" action="/memberships/subscriptions/new" class="mt-3 grid grid-cols-1 sm:grid-cols-6 gap-2">
             <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
             <input type="hidden" name="household_id" value="<?= e((string)$household['id']) ?>">
 
@@ -65,6 +65,16 @@ ob_start();
 
             <input name="amount" placeholder="Montant (optionnel)" class="w-full border border-slate-300 rounded px-3 py-2">
 
+            <select name="payment_method" class="w-full border border-slate-300 rounded px-3 py-2">
+                <option value="">Paiement…</option>
+                <?php if (App\Support\ModuleSettings::getBool((int)$_SESSION['tenant_id'], 'members', 'helloasso_enabled', false)): ?>
+                    <option value="helloasso">HelloAsso</option>
+                <?php endif; ?>
+                <option value="cash">Espèces</option>
+                <option value="check">Chèque</option>
+                <option value="transfer">Virement</option>
+            </select>
+
             <button class="bg-slate-900 text-white rounded px-3 py-2 text-sm" type="submit">Ajouter</button>
         </form>
 
@@ -76,12 +86,13 @@ ob_start();
                     <th class="text-left p-3">Période</th>
                     <th class="text-left p-3">Montant</th>
                     <th class="text-left p-3">Statut</th>
+                    <th class="text-right p-3">Action</th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php if (empty($membershipSubscriptions)): ?>
                     <tr>
-                        <td class="p-3 text-slate-500" colspan="4">Aucune cotisation enregistrée.</td>
+                        <td class="p-3 text-slate-500" colspan="5">Aucune cotisation enregistrée.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach (($membershipSubscriptions ?? []) as $s): ?>
@@ -94,7 +105,37 @@ ob_start();
                                 <?= e((string)($s['start_date'] ?? '')) ?> → <?= e((string)($s['end_date'] ?? '')) ?>
                             </td>
                             <td class="p-3"><?= e(number_format(((int)($s['amount_cents'] ?? 0)) / 100, 2, ',', ' ')) ?> €</td>
-                            <td class="p-3"><?= e((string)($s['status'] ?? '')) ?></td>
+                            <?php
+                            $status = (string)($s['status'] ?? '');
+                            $statusLabel = $status;
+                            if ($status === 'pending') {
+                                $statusLabel = 'En attente';
+                            } elseif ($status === 'paid') {
+                                $statusLabel = 'Payée';
+                            } elseif ($status === 'canceled') {
+                                $statusLabel = 'Annulée';
+                            } elseif ($status === 'expired') {
+                                $statusLabel = 'Expirée';
+                            }
+                            ?>
+                            <td class="p-3"><?= e($statusLabel) ?></td>
+                            <td class="p-3 text-right">
+                                <?php if ((string)($s['status'] ?? '') === 'pending' && (string)($s['payment_provider'] ?? '') === 'helloasso' && App\Support\ModuleSettings::getBool((int)$_SESSION['tenant_id'], 'members', 'helloasso_enabled', false)): ?>
+                                    <form method="post" action="/memberships/helloasso/pay" class="inline">
+                                        <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
+                                        <input type="hidden" name="subscription_id" value="<?= e((string)$s['id']) ?>">
+                                        <button class="border border-slate-300 rounded px-3 py-2 text-sm" type="submit">Payer (HelloAsso)</button>
+                                    </form>
+                                <?php elseif ((string)($s['status'] ?? '') === 'pending' && in_array((string)($s['payment_provider'] ?? ''), ['check', 'transfer'], true)): ?>
+                                    <form method="post" action="/memberships/subscriptions/mark-paid" class="inline">
+                                        <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
+                                        <input type="hidden" name="subscription_id" value="<?= e((string)$s['id']) ?>">
+                                        <button class="border border-slate-300 rounded px-3 py-2 text-sm" type="submit">Marquer payée</button>
+                                    </form>
+                                <?php else: ?>
+                                    <span class="text-slate-400">—</span>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>

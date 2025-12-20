@@ -30,6 +30,20 @@ final class Router
         $path = parse_url($uri, PHP_URL_PATH) ?: '/';
 
         if ($method === 'POST') {
+            $csrfExempt = [
+                '/webhooks/helloasso',
+            ];
+            if (in_array($path, $csrfExempt, true)) {
+                $handler = $this->routes[$method][$path] ?? null;
+                if ($handler === null) {
+                    http_response_code(404);
+                    echo '404';
+                    return;
+                }
+                call_user_func($handler);
+                return;
+            }
+
             $token = is_array($_POST) ? ($_POST['_csrf'] ?? null) : null;
             if (!Csrf::verify(is_string($token) ? $token : null)) {
                 http_response_code(419);

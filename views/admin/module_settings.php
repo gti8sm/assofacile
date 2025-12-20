@@ -43,6 +43,38 @@ ob_start();
             </div>
             <input type="checkbox" class="h-5 w-5" name="memberships_create_treasury_income" value="1" <?= !empty($settings['memberships_create_treasury_income']) ? 'checked' : '' ?>>
         </label>
+
+        <div class="mt-2 font-semibold">HelloAsso (paiement en ligne)</div>
+
+        <label class="flex items-center justify-between gap-4 p-3 border border-slate-200 rounded">
+            <div>
+                <div class="font-medium">Activer HelloAsso</div>
+                <div class="text-xs text-slate-500">Permet de payer une cotisation via HelloAsso Checkout (API).</div>
+            </div>
+            <input type="checkbox" class="h-5 w-5" name="helloasso_enabled" value="1" <?= !empty($settings['helloasso_enabled']) ? 'checked' : '' ?>>
+        </label>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+                <label class="block text-sm font-medium mb-1">Environnement</label>
+                <select name="helloasso_environment" class="w-full border border-slate-300 rounded px-3 py-2">
+                    <option value="prod" <?= (($settings['helloasso_environment'] ?? 'prod') === 'prod') ? 'selected' : '' ?>>Production</option>
+                    <option value="sandbox" <?= (($settings['helloasso_environment'] ?? 'prod') === 'sandbox') ? 'selected' : '' ?>>Sandbox</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Organization slug</label>
+                <input name="helloasso_organization_slug" value="<?= e((string)($settings['helloasso_organization_slug'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Client ID</label>
+                <input name="helloasso_client_id" value="<?= e((string)($settings['helloasso_client_id'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2" autocomplete="off">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Client Secret</label>
+                <input type="password" name="helloasso_client_secret" value="<?= e((string)($settings['helloasso_client_secret'] ?? '')) ?>" class="w-full border border-slate-300 rounded px-3 py-2" autocomplete="new-password">
+            </div>
+        </div>
     <?php endif; ?>
 
     <?php if ($moduleKey === 'treasury'): ?>
