@@ -14,6 +14,7 @@ use App\Http\Controllers\InstallController;
 use App\Http\Controllers\AdminLicenseController;
 use App\Http\Controllers\AdminUpdateController;
 use App\Http\Controllers\AdminAccessController;
+use App\Http\Controllers\AdminModuleSettingsController;
 use App\Http\Controllers\MembersController;
 use App\Http\Controllers\HouseholdsController;
 use App\Http\Controllers\MemberPickupsController;
@@ -34,6 +35,9 @@ $router->get('/dashboard', [DashboardController::class, 'index']);
 
 $router->get('/admin/modules', [AdminModulesController::class, 'index']);
 $router->post('/admin/modules', [AdminModulesController::class, 'update']);
+
+$router->get('/admin/modules/settings', [AdminModuleSettingsController::class, 'index']);
+$router->post('/admin/modules/settings', [AdminModuleSettingsController::class, 'update']);
 
 $router->get('/admin/access', [AdminAccessController::class, 'index']);
 $router->post('/admin/access', [AdminAccessController::class, 'update']);

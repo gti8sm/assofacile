@@ -190,66 +190,68 @@ ob_start();
     <button class="bg-slate-900 text-white rounded px-3 py-2 text-sm" type="submit">Enregistrer</button>
 </form>
 
-<div class="mt-4 bg-white border border-slate-200 rounded-lg p-4">
-    <div class="flex items-center justify-between">
-        <div class="font-semibold">Cotisations</div>
-        <a class="text-sm underline" href="/memberships/products">Catalogue</a>
-    </div>
+<?php if (App\Support\ModuleSettings::getBool((int)$_SESSION['tenant_id'], 'members', 'memberships_enabled', true)): ?>
+    <div class="mt-4 bg-white border border-slate-200 rounded-lg p-4">
+        <div class="flex items-center justify-between">
+            <div class="font-semibold">Cotisations</div>
+            <a class="text-sm underline" href="/memberships/products">Catalogue</a>
+        </div>
 
-    <form method="post" action="/memberships/subscriptions/new" class="mt-3 grid grid-cols-1 sm:grid-cols-5 gap-2">
-        <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
-        <input type="hidden" name="member_id" value="<?= e((string)$member['id']) ?>">
+        <form method="post" action="/memberships/subscriptions/new" class="mt-3 grid grid-cols-1 sm:grid-cols-5 gap-2">
+            <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
+            <input type="hidden" name="member_id" value="<?= e((string)$member['id']) ?>">
 
-        <select name="product_id" class="w-full border border-slate-300 rounded px-3 py-2 sm:col-span-2">
-            <option value="">Cotisation…</option>
-            <?php foreach (($membershipProducts ?? []) as $p): ?>
-                <option value="<?= e((string)$p['id']) ?>">
-                    <?= e((string)$p['label']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-        <input name="start_date" type="date" value="<?= e((new DateTimeImmutable('today'))->format('Y-m-d')) ?>" class="w-full border border-slate-300 rounded px-3 py-2">
-
-        <input name="amount" placeholder="Montant (optionnel)" class="w-full border border-slate-300 rounded px-3 py-2">
-
-        <button class="bg-slate-900 text-white rounded px-3 py-2 text-sm" type="submit">Ajouter</button>
-    </form>
-
-    <div class="mt-3 bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="bg-slate-50">
-            <tr>
-                <th class="text-left p-3">Cotisation</th>
-                <th class="text-left p-3">Période</th>
-                <th class="text-left p-3">Montant</th>
-                <th class="text-left p-3">Statut</th>
-            </tr>
-            </thead>
-            <tbody>
-            <?php if (empty($membershipSubscriptions)): ?>
-                <tr>
-                    <td class="p-3 text-slate-500" colspan="4">Aucune cotisation enregistrée.</td>
-                </tr>
-            <?php else: ?>
-                <?php foreach (($membershipSubscriptions ?? []) as $s): ?>
-                    <tr class="border-t border-slate-200">
-                        <td class="p-3">
-                            <div class="font-medium"><?= e((string)($s['product_label'] ?? '—')) ?></div>
-                            <div class="text-xs text-slate-500">#<?= e((string)$s['id']) ?></div>
-                        </td>
-                        <td class="p-3">
-                            <?= e((string)($s['start_date'] ?? '')) ?> → <?= e((string)($s['end_date'] ?? '')) ?>
-                        </td>
-                        <td class="p-3"><?= e(number_format(((int)($s['amount_cents'] ?? 0)) / 100, 2, ',', ' ')) ?> €</td>
-                        <td class="p-3"><?= e((string)($s['status'] ?? '')) ?></td>
-                    </tr>
+            <select name="product_id" class="w-full border border-slate-300 rounded px-3 py-2 sm:col-span-2">
+                <option value="">Cotisation…</option>
+                <?php foreach (($membershipProducts ?? []) as $p): ?>
+                    <option value="<?= e((string)$p['id']) ?>">
+                        <?= e((string)$p['label']) ?>
+                    </option>
                 <?php endforeach; ?>
-            <?php endif; ?>
-            </tbody>
-        </table>
+            </select>
+
+            <input name="start_date" type="date" value="<?= e((new DateTimeImmutable('today'))->format('Y-m-d')) ?>" class="w-full border border-slate-300 rounded px-3 py-2">
+
+            <input name="amount" placeholder="Montant (optionnel)" class="w-full border border-slate-300 rounded px-3 py-2">
+
+            <button class="bg-slate-900 text-white rounded px-3 py-2 text-sm" type="submit">Ajouter</button>
+        </form>
+
+        <div class="mt-3 bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-50">
+                <tr>
+                    <th class="text-left p-3">Cotisation</th>
+                    <th class="text-left p-3">Période</th>
+                    <th class="text-left p-3">Montant</th>
+                    <th class="text-left p-3">Statut</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php if (empty($membershipSubscriptions)): ?>
+                    <tr>
+                        <td class="p-3 text-slate-500" colspan="4">Aucune cotisation enregistrée.</td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach (($membershipSubscriptions ?? []) as $s): ?>
+                        <tr class="border-t border-slate-200">
+                            <td class="p-3">
+                                <div class="font-medium"><?= e((string)($s['product_label'] ?? '—')) ?></div>
+                                <div class="text-xs text-slate-500">#<?= e((string)$s['id']) ?></div>
+                            </td>
+                            <td class="p-3">
+                                <?= e((string)($s['start_date'] ?? '')) ?> → <?= e((string)($s['end_date'] ?? '')) ?>
+                            </td>
+                            <td class="p-3"><?= e(number_format(((int)($s['amount_cents'] ?? 0)) / 100, 2, ',', ' ')) ?> €</td>
+                            <td class="p-3"><?= e((string)($s['status'] ?? '')) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+<?php endif; ?>
 <?php
 $content = ob_get_clean();
 require base_path('views/layout.php');

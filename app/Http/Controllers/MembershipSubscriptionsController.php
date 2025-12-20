@@ -6,6 +6,8 @@ namespace App\Http\Controllers;
 
 use App\Database\Db;
 use App\Support\Access;
+use App\Support\ModuleSettings;
+use App\Support\Modules;
 use App\Support\Session;
 
 final class MembershipSubscriptionsController
@@ -120,6 +122,57 @@ final class MembershipSubscriptionsController
             'status' => 'paid',
             'created_by_user_id' => $userId,
         ]);
+
+        $subscriptionId = (int)$pdo->lastInsertId();
+
+        $canCreateTreasury = Modules::isEnabled($tenantId, 'treasury')
+            && ModuleSettings::getBool($tenantId, 'members', 'memberships_create_treasury_income', false)
+            && Access::can($tenantId, $userId, 'treasury', 'write');
+
+        if ($canCreateTreasury) {
+            try {
+                $targetLabel = '';
+                if ($memberId > 0) {
+                    $targetLabel = 'membre #' . $memberId;
+                } elseif ($householdId > 0) {
+                    $targetLabel = 'foyer #' . $householdId;
+                }
+
+                $label = 'Cotisation: produit #' . $productId;
+                if ($targetLabel !== '') {
+                    $label .= ' (' . $targetLabel . ')';
+                }
+
+                $stmt = $pdo->prepare(
+                    'INSERT INTO treasury_transactions (tenant_id, created_by_user_id, type, amount_cents, label, occurred_on, category_id)
+                     VALUES (:tenant_id, :user_id, :type, :amount_cents, :label, :occurred_on, NULL)'
+                );
+                $stmt->execute([
+                    'tenant_id' => $tenantId,
+                    'user_id' => $userId,
+                    'type' => 'income',
+                    'amount_cents' => $amountCents,
+                    'label' => $label,
+                    'occurred_on' => $startDate,
+                ]);
+
+                $treasuryTransactionId = (int)$pdo->lastInsertId();
+                if ($treasuryTransactionId > 0) {
+                    $stmt = $pdo->prepare(
+                        'UPDATE membership_subscriptions
+                         SET treasury_transaction_id = :treasury_transaction_id
+                         WHERE id = :id AND tenant_id = :tenant_id'
+                    );
+                    $stmt->execute([
+                        'treasury_transaction_id' => $treasuryTransactionId,
+                        'id' => $subscriptionId,
+                        'tenant_id' => $tenantId,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                // Keep subscription even if treasury integration fails.
+            }
+        }
 
         Session::flash('success', 'Cotisation enregistrée.');
         self::redirectBack($memberId, $householdId);

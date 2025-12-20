@@ -27,9 +27,14 @@ final class AdminUpdateController
     {
         self::requireAdmin();
 
-        $pdo = Db::pdo();
-        $pendingFiles = Migrator::pending($pdo);
-        $pending = array_map('basename', $pendingFiles);
+        $pending = [];
+        try {
+            $pdo = Db::pdo();
+            $pendingFiles = Migrator::pending($pdo);
+            $pending = array_map('basename', $pendingFiles);
+        } catch (\Throwable $e) {
+            Session::flash('error', 'Erreur migrations: ' . $e->getMessage());
+        }
 
         $flash = Session::flash('success');
         $error = Session::flash('error');

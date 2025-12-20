@@ -24,19 +24,24 @@ ob_start();
     <div class="space-y-3">
         <?php foreach ($modules as $m): ?>
             <?php $key = (string)$m['module_key']; ?>
-            <label class="flex items-center justify-between gap-4 p-3 border border-slate-200 rounded">
+            <div class="flex items-center justify-between gap-4 p-3 border border-slate-200 rounded">
                 <div>
                     <div class="font-medium"><?= e((string)$m['name']) ?></div>
                     <div class="text-xs text-slate-500"><?= e($key) ?></div>
                 </div>
-                <input
-                    type="checkbox"
-                    name="modules[<?= e($key) ?>]"
-                    value="1"
-                    class="h-5 w-5"
-                    <?= !empty($enabledByKey[$key]) ? 'checked' : '' ?>
-                >
-            </label>
+                <div class="flex items-center gap-3">
+                    <?php if (!empty($enabledByKey[$key])): ?>
+                        <a class="text-sm underline" href="/admin/modules/settings?module=<?= e($key) ?>">Paramètres</a>
+                    <?php endif; ?>
+                    <input
+                        type="checkbox"
+                        name="modules[<?= e($key) ?>]"
+                        value="1"
+                        class="h-5 w-5"
+                        <?= !empty($enabledByKey[$key]) ? 'checked' : '' ?>
+                    >
+                </div>
+            </div>
         <?php endforeach; ?>
     </div>
 
