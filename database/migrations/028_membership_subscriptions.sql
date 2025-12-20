@@ -1,0 +1,41 @@
+CREATE TABLE membership_products (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  tenant_id INT UNSIGNED NOT NULL,
+  label VARCHAR(190) NOT NULL,
+  applies_to ENUM('person','household') NOT NULL DEFAULT 'person',
+  amount_default_cents INT NULL,
+  amount_min_cents INT NULL,
+  amount_max_cents INT NULL,
+  period_months INT UNSIGNED NOT NULL DEFAULT 12,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_mp_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  INDEX idx_mp_tenant (tenant_id),
+  INDEX idx_mp_active (tenant_id, is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE membership_subscriptions (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  tenant_id INT UNSIGNED NOT NULL,
+  product_id INT UNSIGNED NULL,
+  member_id INT UNSIGNED NULL,
+  household_id INT UNSIGNED NULL,
+  amount_cents INT NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  status ENUM('pending','paid','canceled','expired') NOT NULL DEFAULT 'paid',
+  treasury_transaction_id BIGINT UNSIGNED NULL,
+  created_by_user_id INT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_ms_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ms_product FOREIGN KEY (product_id) REFERENCES membership_products(id) ON DELETE SET NULL,
+  CONSTRAINT fk_ms_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ms_household FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ms_user FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_ms_tt FOREIGN KEY (treasury_transaction_id) REFERENCES treasury_transactions(id) ON DELETE SET NULL,
+  INDEX idx_ms_tenant_dates (tenant_id, start_date, end_date),
+  INDEX idx_ms_member (tenant_id, member_id),
+  INDEX idx_ms_household (tenant_id, household_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

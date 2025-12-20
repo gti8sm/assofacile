@@ -18,6 +18,8 @@ use App\Http\Controllers\MembersController;
 use App\Http\Controllers\HouseholdsController;
 use App\Http\Controllers\MemberPickupsController;
 use App\Http\Controllers\ChildGroupsController;
+use App\Http\Controllers\MembershipProductsController;
+use App\Http\Controllers\MembershipSubscriptionsController;
 
 $router->get('/', [DashboardController::class, 'index']);
 
@@ -80,5 +82,11 @@ $router->get('/child-groups/new', [ChildGroupsController::class, 'create']);
 $router->post('/child-groups/new', [ChildGroupsController::class, 'store']);
 $router->get('/child-groups/edit', [ChildGroupsController::class, 'edit']);
 $router->post('/child-groups/edit', [ChildGroupsController::class, 'update']);
+
+$router->get('/memberships/products', [MembershipProductsController::class, 'index']);
+$router->get('/memberships/products/new', [MembershipProductsController::class, 'create']);
+$router->post('/memberships/products/new', [MembershipProductsController::class, 'store']);
+
+$router->post('/memberships/subscriptions/new', [MembershipSubscriptionsController::class, 'store']);
 
 $router->get('/changelog', [ChangelogController::class, 'index']);

@@ -58,6 +58,33 @@ final class MembersController
     {
         Access::require('members', 'write');
 
+        $createType = (string)($_GET['type'] ?? '');
+        if (!in_array($createType, ['', 'child'], true)) {
+            $createType = '';
+        }
+        $prefillHouseholdId = (int)($_GET['household_id'] ?? 0);
+        $returnTo = (string)($_GET['return_to'] ?? '');
+
+        $suggestedParent = null;
+        $availableParents = [];
+        if ($createType === 'child' && $prefillHouseholdId > 0) {
+            $pdo = Db::pdo();
+            $stmt = $pdo->prepare(
+                'SELECT id, first_name, last_name, email, phone
+                 FROM members
+                 WHERE tenant_id = :tenant_id
+                   AND household_id = :household_id
+                   AND relationship IN (\'adult\', \'spouse\')
+                 ORDER BY relationship ASC, id ASC'
+            );
+            $stmt->execute([
+                'tenant_id' => (int)$_SESSION['tenant_id'],
+                'household_id' => $prefillHouseholdId,
+            ]);
+            $availableParents = $stmt->fetchAll();
+            $suggestedParent = $availableParents[0] ?? null;
+        }
+
         $error = Session::flash('error');
         require base_path('views/members/new.php');
     }
@@ -77,6 +104,17 @@ final class MembersController
         $paidUntil = trim((string)($_POST['membership_paid_until'] ?? ''));
         $address = trim((string)($_POST['address'] ?? ''));
         $notes = trim((string)($_POST['notes'] ?? ''));
+
+        $relationship = (string)($_POST['relationship'] ?? 'adult');
+        if (!in_array($relationship, ['adult', 'spouse', 'child'], true)) {
+            $relationship = 'adult';
+        }
+        $householdId = (int)($_POST['household_id'] ?? 0);
+        $useHouseholdAddress = (int)($_POST['use_household_address'] ?? 0) === 1 ? 1 : 0;
+        $returnTo = (string)($_POST['return_to'] ?? '');
+        if ($returnTo !== '' && (!str_starts_with($returnTo, '/') || str_starts_with($returnTo, '//'))) {
+            $returnTo = '';
+        }
 
         if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             Session::flash('error', 'Email invalide.');
@@ -98,11 +136,15 @@ final class MembersController
             redirect('/members/new');
         }
 
+        if ($householdId < 0) {
+            $householdId = 0;
+        }
+
         $pdo = Db::pdo();
         try {
             $stmt = $pdo->prepare(
-                'INSERT INTO members (tenant_id, first_name, last_name, birth_date, email, phone, address, status, member_since, membership_paid_until, notes)
-                 VALUES (:tenant_id, :first_name, :last_name, :birth_date, :email, :phone, :address, :status, :member_since, :membership_paid_until, :notes)'
+                'INSERT INTO members (tenant_id, first_name, last_name, birth_date, email, phone, address, status, member_since, membership_paid_until, notes, household_id, relationship, use_household_address)
+                 VALUES (:tenant_id, :first_name, :last_name, :birth_date, :email, :phone, :address, :status, :member_since, :membership_paid_until, :notes, :household_id, :relationship, :use_household_address)'
             );
             $stmt->execute([
                 'tenant_id' => $tenantId,
@@ -116,6 +158,9 @@ final class MembersController
                 'member_since' => ($memberSince !== '' ? $memberSince : null),
                 'membership_paid_until' => ($paidUntil !== '' ? $paidUntil : null),
                 'notes' => ($notes !== '' ? $notes : null),
+                'household_id' => ($householdId > 0 ? $householdId : null),
+                'relationship' => $relationship,
+                'use_household_address' => $useHouseholdAddress,
             ]);
         } catch (\Throwable $e) {
             Session::flash('error', 'Erreur lors de la création (email déjà utilisé ?).');
@@ -123,6 +168,9 @@ final class MembersController
         }
 
         Session::flash('success', 'Adhérent ajouté.');
+        if ($returnTo !== '') {
+            redirect($returnTo);
+        }
         redirect('/members');
     }
 
@@ -190,6 +238,38 @@ final class MembersController
             );
             $stmt->execute(['member_id' => (int)$member['id']]);
             $pickups = $stmt->fetchAll();
+        }
+
+        $membershipProducts = [];
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT id, label, amount_default_cents, period_months
+                 FROM membership_products
+                 WHERE tenant_id = :tenant_id AND is_active = 1 AND applies_to = \'person\'
+                 ORDER BY id DESC'
+            );
+            $stmt->execute(['tenant_id' => $tenantId]);
+            $membershipProducts = $stmt->fetchAll();
+        } catch (\Throwable $e) {
+            $membershipProducts = [];
+        }
+
+        $membershipSubscriptions = [];
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT ms.id, ms.amount_cents, ms.start_date, ms.end_date, ms.status, mp.label AS product_label
+                 FROM membership_subscriptions ms
+                 LEFT JOIN membership_products mp ON mp.id = ms.product_id
+                 WHERE ms.tenant_id = :tenant_id AND ms.member_id = :member_id
+                 ORDER BY ms.start_date DESC, ms.id DESC'
+            );
+            $stmt->execute([
+                'tenant_id' => $tenantId,
+                'member_id' => (int)$member['id'],
+            ]);
+            $membershipSubscriptions = $stmt->fetchAll();
+        } catch (\Throwable $e) {
+            $membershipSubscriptions = [];
         }
 
         $error = Session::flash('error');

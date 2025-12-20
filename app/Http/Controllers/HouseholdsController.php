@@ -102,6 +102,38 @@ final class HouseholdsController
         ]);
         $members = $stmt->fetchAll();
 
+        $membershipProducts = [];
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT id, label, amount_default_cents, period_months
+                 FROM membership_products
+                 WHERE tenant_id = :tenant_id AND is_active = 1 AND applies_to = \'household\'
+                 ORDER BY id DESC'
+            );
+            $stmt->execute(['tenant_id' => $tenantId]);
+            $membershipProducts = $stmt->fetchAll();
+        } catch (\Throwable $e) {
+            $membershipProducts = [];
+        }
+
+        $membershipSubscriptions = [];
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT ms.id, ms.amount_cents, ms.start_date, ms.end_date, ms.status, mp.label AS product_label
+                 FROM membership_subscriptions ms
+                 LEFT JOIN membership_products mp ON mp.id = ms.product_id
+                 WHERE ms.tenant_id = :tenant_id AND ms.household_id = :household_id
+                 ORDER BY ms.start_date DESC, ms.id DESC'
+            );
+            $stmt->execute([
+                'tenant_id' => $tenantId,
+                'household_id' => $id,
+            ]);
+            $membershipSubscriptions = $stmt->fetchAll();
+        } catch (\Throwable $e) {
+            $membershipSubscriptions = [];
+        }
+
         $flash = Session::flash('success');
         $error = Session::flash('error');
         require base_path('views/households/edit.php');
