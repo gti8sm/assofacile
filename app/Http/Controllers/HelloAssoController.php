@@ -13,6 +13,44 @@ use App\Support\Session;
 
 final class HelloAssoController
 {
+    private static function ensureMembershipTreasuryCategoryId(\PDO $pdo, int $tenantId): ?int
+    {
+        try {
+            $stmt = $pdo->prepare('SELECT id FROM treasury_categories WHERE tenant_id = :tenant_id AND name = :name LIMIT 1');
+            $stmt->execute([
+                'tenant_id' => $tenantId,
+                'name' => 'Cotisations',
+            ]);
+            $row = $stmt->fetch();
+            if ($row && (int)($row['id'] ?? 0) > 0) {
+                return (int)$row['id'];
+            }
+
+            $stmt = $pdo->prepare('INSERT INTO treasury_categories (tenant_id, name) VALUES (:tenant_id, :name)');
+            $stmt->execute([
+                'tenant_id' => $tenantId,
+                'name' => 'Cotisations',
+            ]);
+
+            $id = (int)$pdo->lastInsertId();
+            return $id > 0 ? $id : null;
+        } catch (\Throwable $e) {
+            try {
+                $stmt = $pdo->prepare('SELECT id FROM treasury_categories WHERE tenant_id = :tenant_id AND name = :name LIMIT 1');
+                $stmt->execute([
+                    'tenant_id' => $tenantId,
+                    'name' => 'Cotisations',
+                ]);
+                $row = $stmt->fetch();
+                if ($row && (int)($row['id'] ?? 0) > 0) {
+                    return (int)$row['id'];
+                }
+            } catch (\Throwable $e2) {
+            }
+            return null;
+        }
+    }
+
     public static function payMembership(): void
     {
         Access::require('members', 'write');
@@ -52,9 +90,16 @@ final class HelloAssoController
 
         $pdo = Db::pdo();
         $stmt = $pdo->prepare(
-            'SELECT ms.id, ms.tenant_id, ms.product_id, ms.member_id, ms.household_id, ms.amount_cents, ms.start_date, ms.status, mp.label AS product_label
+            'SELECT ms.id, ms.tenant_id, ms.product_id, ms.member_id, ms.household_id, ms.amount_cents, ms.start_date, ms.status,
+                    mp.label AS product_label,
+                    CONCAT(COALESCE(m.first_name, ""), " ", COALESCE(m.last_name, "")) AS member_name,
+                    h.name AS household_name
              FROM membership_subscriptions ms
              LEFT JOIN membership_products mp ON mp.id = ms.product_id
+             LEFT JOIN members m
+               ON m.id = ms.member_id AND m.tenant_id = ms.tenant_id
+             LEFT JOIN households h
+               ON h.id = ms.household_id AND h.tenant_id = ms.tenant_id
              WHERE ms.id = :id AND ms.tenant_id = :tenant_id
              LIMIT 1'
         );
@@ -84,7 +129,26 @@ final class HelloAssoController
         }
 
         $productLabel = trim((string)($sub['product_label'] ?? 'Cotisation'));
-        $itemName = $productLabel !== '' ? $productLabel : 'Cotisation';
+        if ($productLabel === '') {
+            $productLabel = 'Cotisation';
+        }
+
+        $memberName = trim((string)($sub['member_name'] ?? ''));
+        $householdName = trim((string)($sub['household_name'] ?? ''));
+        $holderLabel = '';
+        if ($householdName !== '' && $memberName !== '') {
+            $holderLabel = $householdName . ' / ' . $memberName;
+        } elseif ($householdName !== '') {
+            $holderLabel = $householdName;
+        } elseif ($memberName !== '') {
+            $holderLabel = $memberName;
+        }
+
+        $itemName = $holderLabel !== '' ? ($productLabel . ' — ' . $holderLabel) : $productLabel;
+        $itemName = trim(preg_replace('/\s+/', ' ', $itemName) ?? $itemName);
+        if (mb_strlen($itemName) > 100) {
+            $itemName = mb_substr($itemName, 0, 97) . '...';
+        }
 
         $baseUrl = self::baseUrl();
         $backUrl = $baseUrl . '/memberships/helloasso/return?type=back&subscription_id=' . (int)$sub['id'];
@@ -210,7 +274,31 @@ final class HelloAssoController
             'event_type' => $eventType,
             'payload_json' => $raw,
         ]);
+
+        $stmt = $pdo->prepare('SELECT processed_at FROM helloasso_webhook_events WHERE tenant_id = :tenant_id AND event_key = :event_key LIMIT 1');
+        $stmt->execute(['tenant_id' => $tenantId, 'event_key' => $eventKey]);
+        $evtRow = $stmt->fetch();
+        if ($evtRow && !empty($evtRow['processed_at'])) {
+            http_response_code(200);
+            echo 'ok';
+            return;
+        }
+
+        $markProcessed = static function (\PDO $pdo, int $tenantId, string $eventKey): void {
+            $stmt = $pdo->prepare(
+                'UPDATE helloasso_webhook_events
+                 SET processed_at = :processed_at
+                 WHERE tenant_id = :tenant_id AND event_key = :event_key'
+            );
+            $stmt->execute([
+                'processed_at' => date('Y-m-d H:i:s'),
+                'tenant_id' => $tenantId,
+                'event_key' => $eventKey,
+            ]);
+        };
+
         if ($eventType !== 'Payment') {
+            $markProcessed($pdo, $tenantId, $eventKey);
             http_response_code(200);
             echo 'ok';
             return;
@@ -220,9 +308,11 @@ final class HelloAssoController
             $paymentState = (string)($data['state'] ?? ($data['status'] ?? ''));
         }
         $paymentStateLower = strtolower($paymentState);
-        $isPaid = in_array($paymentStateLower, ['succeeded', 'paid', 'success'], true) || $paymentStateLower === '';
+        $successStates = ['succeeded', 'paid', 'success', 'validated', 'authorized', 'completed'];
+        $isPaid = in_array($paymentStateLower, $successStates, true);
 
         if (!$isPaid) {
+            $markProcessed($pdo, $tenantId, $eventKey);
             http_response_code(200);
             echo 'ok';
             return;
@@ -272,6 +362,8 @@ final class HelloAssoController
                     if ($createdByUserId <= 0) {
                         $createdByUserId = 1;
                     }
+
+                    $categoryId = self::ensureMembershipTreasuryCategoryId($pdo, $tenantId);
                     $amountCents = (int)($sub['amount_cents'] ?? 0);
                     $startDate = (string)($sub['start_date'] ?? date('Y-m-d'));
 
@@ -311,7 +403,7 @@ final class HelloAssoController
 
                     $stmt = $pdo->prepare(
                         'INSERT INTO treasury_transactions (tenant_id, created_by_user_id, type, amount_cents, label, occurred_on, category_id)
-                         VALUES (:tenant_id, :user_id, :type, :amount_cents, :label, :occurred_on, NULL)'
+                         VALUES (:tenant_id, :user_id, :type, :amount_cents, :label, :occurred_on, :category_id)'
                     );
                     $stmt->execute([
                         'tenant_id' => $tenantId,
@@ -320,6 +412,7 @@ final class HelloAssoController
                         'amount_cents' => $amountCents,
                         'label' => $label,
                         'occurred_on' => $startDate,
+                        'category_id' => $categoryId,
                     ]);
 
                     $ttId = (int)$pdo->lastInsertId();
@@ -334,16 +427,7 @@ final class HelloAssoController
                 }
             }
 
-            $stmt = $pdo->prepare(
-                'UPDATE helloasso_webhook_events
-                 SET processed_at = :processed_at
-                 WHERE tenant_id = :tenant_id AND event_key = :event_key'
-            );
-            $stmt->execute([
-                'processed_at' => date('Y-m-d H:i:s'),
-                'tenant_id' => $tenantId,
-                'event_key' => $eventKey,
-            ]);
+            $markProcessed($pdo, $tenantId, $eventKey);
 
             $pdo->commit();
         } catch (\Throwable $e) {

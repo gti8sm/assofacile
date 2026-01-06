@@ -10,6 +10,7 @@ VALUES (1, 'admin@demo.local', '$2y$10$2cX0jG8hA8Yxj.1xB7j9eO6s9k2Wm3Dq8G2bKQ3v6
 
 INSERT IGNORE INTO modules (module_key, name) VALUES ('treasury', 'Trésorerie');
 INSERT IGNORE INTO modules (module_key, name) VALUES ('drive', 'Google Drive');
+INSERT IGNORE INTO modules (module_key, name) VALUES ('projects', 'Projets');
 
 INSERT IGNORE INTO tenant_modules (tenant_id, module_id, is_enabled, enabled_at)
 SELECT 1, m.id, 1, CURRENT_TIMESTAMP

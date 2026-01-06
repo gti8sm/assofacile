@@ -32,9 +32,29 @@ ob_start();
             <?php endif; ?>
         </div>
 
+        <div class="mt-6">
+            <div class="text-sm font-semibold">Migrations appliquées</div>
+            <div class="mt-2 text-sm text-slate-600">
+                <?php if (empty($applied)): ?>
+                    Aucune.
+                <?php else: ?>
+                    <div class="font-mono text-xs bg-slate-50 border border-slate-200 rounded p-3 max-h-64 overflow-auto">
+                        <?php foreach ($applied as $row): ?>
+                            <div><?= e((string)$row['applied_at']) ?>  <?= e((string)$row['migration']) ?></div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
         <form method="post" class="mt-4">
             <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
+            <label class="block mb-3 text-sm text-slate-700">
+                <input type="checkbox" name="backup_before" value="1" class="mr-2">
+                Faire un backup avant d'appliquer
+            </label>
             <button class="bg-slate-900 text-white rounded px-3 py-2 text-sm" type="submit">Appliquer les mises à jour</button>
+            <a class="ml-2 border border-slate-300 rounded px-3 py-2 text-sm" href="/admin/update/backup">Télécharger un backup</a>
             <a class="ml-2 border border-slate-300 rounded px-3 py-2 text-sm" href="/dashboard">Retour</a>
         </form>
 

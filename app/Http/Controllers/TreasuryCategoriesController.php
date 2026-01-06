@@ -20,7 +20,7 @@ final class TreasuryCategoriesController
         self::guard();
 
         $pdo = Db::pdo();
-        $stmt = $pdo->prepare('SELECT id, name, created_at FROM treasury_categories WHERE tenant_id = :tenant_id ORDER BY name ASC');
+        $stmt = $pdo->prepare('SELECT id, name, account_code, created_at FROM treasury_categories WHERE tenant_id = :tenant_id ORDER BY name ASC');
         $stmt->execute(['tenant_id' => (int)$_SESSION['tenant_id']]);
         $categories = $stmt->fetchAll();
 
@@ -36,7 +36,7 @@ final class TreasuryCategoriesController
         $name = trim((string)($_POST['name'] ?? ''));
         if ($name === '') {
             Session::flash('error', 'Nom invalide.');
-            redirect('/treasury/categories');
+            redirect(tenant_path('/treasury/categories'));
         }
 
         $pdo = Db::pdo();
@@ -49,10 +49,45 @@ final class TreasuryCategoriesController
             ]);
         } catch (\Throwable $e) {
             Session::flash('error', 'Catégorie déjà existante ou erreur.');
-            redirect('/treasury/categories');
+            redirect(tenant_path('/treasury/categories'));
         }
 
         Session::flash('success', 'Catégorie créée.');
-        redirect('/treasury/categories');
+        redirect(tenant_path('/treasury/categories'));
+    }
+
+    public static function update(): void
+    {
+        Access::require('treasury', 'write');
+
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id <= 0) {
+            Session::flash('error', 'Catégorie invalide.');
+            redirect(tenant_path('/treasury/categories'));
+        }
+
+        $accountCode = trim((string)($_POST['account_code'] ?? ''));
+        if ($accountCode !== '') {
+            if (mb_strlen($accountCode) > 32) {
+                $accountCode = mb_substr($accountCode, 0, 32);
+            }
+            if (!preg_match('/^[0-9A-Za-z._\-]+$/', $accountCode)) {
+                Session::flash('error', 'Compte comptable invalide.');
+                redirect(tenant_path('/treasury/categories'));
+            }
+        }
+
+        $pdo = Db::pdo();
+        $tenantId = (int)$_SESSION['tenant_id'];
+
+        $stmt = $pdo->prepare('UPDATE treasury_categories SET account_code = :account_code WHERE id = :id AND tenant_id = :tenant_id');
+        $stmt->execute([
+            'account_code' => ($accountCode !== '' ? $accountCode : null),
+            'id' => $id,
+            'tenant_id' => $tenantId,
+        ]);
+
+        Session::flash('success', 'Catégorie mise à jour.');
+        redirect(tenant_path('/treasury/categories'));
     }
 }

@@ -6,6 +6,8 @@ use Licensing\Http\Controllers\AuthController;
 use Licensing\Http\Controllers\InstallController;
 use Licensing\Http\Controllers\LicensesController;
 use Licensing\Http\Controllers\ApiLicensesController;
+use Licensing\Http\Controllers\ApiStripeWebhookController;
+use Licensing\Http\Controllers\PortalController;
 
 $router->get('/', [LicensesController::class, 'index']);
 
@@ -22,4 +24,8 @@ $router->post('/licenses/generate-key', [LicensesController::class, 'generateKey
 $router->post('/licenses/renew', [LicensesController::class, 'renew']);
 $router->post('/licenses/revoke', [LicensesController::class, 'revoke']);
 
+$router->get('/portal', [PortalController::class, 'show']);
+$router->post('/portal/checkout', [PortalController::class, 'checkout']);
+
 $router->post('/api/v1/licenses/validate', [ApiLicensesController::class, 'validate']);
+$router->post('/api/v1/stripe/webhook', [ApiStripeWebhookController::class, 'webhook']);

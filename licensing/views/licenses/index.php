@@ -47,8 +47,23 @@ ob_start();
             </select>
         </div>
         <div>
+            <label class="block text-sm font-medium mb-1">Plan</label>
+            <select name="plan_tier" class="w-full border border-slate-300 rounded px-3 py-2" required>
+                <option value="core">Core</option>
+                <option value="premium">Premium</option>
+            </select>
+        </div>
+        <div>
             <label class="block text-sm font-medium mb-1">Valide jusqu'au (annual)</label>
             <input name="valid_until" type="date" class="w-full border border-slate-300 rounded px-3 py-2">
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Quota tiers max (optionnel)</label>
+            <input name="quota_tiers_max" type="number" min="0" step="1" class="w-full border border-slate-300 rounded px-3 py-2" placeholder="ex: 50, 200">
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Quota stockage (MB) (optionnel)</label>
+            <input name="quota_storage_mb" type="number" min="0" step="1" class="w-full border border-slate-300 rounded px-3 py-2" placeholder="ex: 2048">
         </div>
         <div class="sm:col-span-2">
             <button class="bg-slate-900 text-white rounded px-3 py-2" type="submit">Créer</button>
@@ -102,7 +117,7 @@ ob_start();
             <tr class="border-t border-slate-200">
                 <td class="p-3 font-mono text-xs"><?= e((string)$l['license_key']) ?></td>
                 <td class="p-3"><?= e((string)($l['tenant_name'] ?? '')) ?></td>
-                <td class="p-3"><?= e((string)$l['plan_type']) ?></td>
+                <td class="p-3"><?= e((string)$l['plan_type']) ?> / <?= e((string)($l['plan_tier'] ?? 'core')) ?></td>
                 <td class="p-3"><?= e((string)($l['valid_until'] ?? '')) ?></td>
                 <td class="p-3"><?= ((int)$l['is_revoked'] === 1) ? 'revoked' : 'ok' ?></td>
                 <td class="p-3">

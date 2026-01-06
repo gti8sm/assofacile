@@ -5,6 +5,12 @@ ob_start();
 ?>
 <div class="flex items-center justify-between">
     <h1 class="text-2xl font-semibold">Licence</h1>
+    <div class="flex items-center gap-2">
+        <?php if (!empty($portalUrl)): ?>
+            <a class="border border-slate-300 rounded px-3 py-2 text-sm" href="<?= e((string)$portalUrl) ?>" target="_blank" rel="noopener noreferrer">Gérer mon abonnement</a>
+        <?php endif; ?>
+        <a class="border border-slate-300 rounded px-3 py-2 text-sm" href="<?= e(tenant_path('/admin/diagnostic')) ?>">Diagnostic serveur</a>
+    </div>
 </div>
 
 <?php if (!empty($flash)): ?>
@@ -35,6 +41,23 @@ ob_start();
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div class="text-slate-500">Statut</div>
             <div class="font-medium"><?= e((string)($license['status'] ?? 'unknown')) ?></div>
+
+            <div class="text-slate-500">Tiers (utilisés / quota)</div>
+            <div class="font-medium"><?= e((string)($tiersUsed ?? 0)) ?> / <?= e((string)($tiersLimit ?? 50)) ?></div>
+
+            <div class="text-slate-500">Stockage local (utilisé / quota)</div>
+            <div class="font-medium">
+                <?php
+                $storageUsedBytes = (int)($storageUsedBytes ?? 0);
+                $storageLimitBytes = (int)($storageLimitBytes ?? 0);
+                $usedGb = $storageUsedBytes > 0 ? ($storageUsedBytes / (1024 * 1024 * 1024)) : 0;
+                $limitGb = $storageLimitBytes > 0 ? ($storageLimitBytes / (1024 * 1024 * 1024)) : 0;
+                ?>
+                <?= e(number_format($usedGb, 2, ',', ' ')) ?> Go / <?= e(number_format($limitGb, 0, ',', ' ')) ?> Go
+            </div>
+
+            <div class="text-slate-500">Surcoût estimé (tiers)</div>
+            <div class="font-medium"><?= e((string)($overageEur ?? 0)) ?> € / mois</div>
 
             <div class="text-slate-500">Plan</div>
             <div class="font-medium"><?= e((string)($license['plan_type'] ?? '-')) ?></div>

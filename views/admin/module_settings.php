@@ -8,7 +8,7 @@ ob_start();
         <h1 class="text-2xl font-semibold">Paramètres</h1>
         <div class="text-xs text-slate-500"><?= e($moduleName) ?> (<?= e($moduleKey) ?>)</div>
     </div>
-    <a class="border border-slate-300 rounded px-3 py-2 text-sm" href="/admin/modules">Retour modules</a>
+    <a class="border border-slate-300 rounded px-3 py-2 text-sm" href="<?= e(tenant_path('/admin/modules')) ?>">Retour modules</a>
 </div>
 
 <?php if (!empty($flash)): ?>
@@ -101,6 +101,83 @@ ob_start();
             </div>
             <input type="checkbox" class="h-5 w-5" name="project_allocation_enabled" value="1" <?= !empty($settings['project_allocation_enabled']) ? 'checked' : '' ?>>
         </label>
+
+        <div class="p-3 border border-slate-200 rounded">
+            <div class="font-medium">Exercice</div>
+            <div class="mt-1 text-xs text-slate-500">Utilisé pour les propositions de clôture (exercice précédent).</div>
+
+            <div class="mt-3 max-w-xs">
+                <label class="block text-sm font-medium mb-1">Mois de début d'exercice</label>
+                <select name="fiscal_year_start_month" class="w-full border border-slate-300 rounded px-3 py-2">
+                    <?php for ($m = 1; $m <= 12; $m++): ?>
+                        <option value="<?= $m ?>" <?= ((int)($settings['fiscal_year_start_month'] ?? 1) === $m) ? 'selected' : '' ?>><?= $m ?></option>
+                    <?php endfor; ?>
+                </select>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($moduleKey === 'drive'): ?>
+        <div class="p-3 border border-slate-200 rounded">
+            <div class="font-medium">Google Drive</div>
+            <?php if (empty($settings['drive_configured'])): ?>
+                <div class="mt-1 text-sm text-slate-600">Non configuré côté serveur (variables GOOGLE_* manquantes ou Composer non installé).</div>
+            <?php else: ?>
+                <?php if (empty($settings['drive_connected'])): ?>
+                    <div class="mt-1 text-sm text-slate-600">Non connecté (connexion à faire dans Admin > Modules).</div>
+                <?php else: ?>
+                    <div class="mt-1 text-sm text-emerald-700">Connecté</div>
+
+                    <div class="mt-3">
+                        <label class="block text-sm font-medium mb-1">Folder ID (dossier cible)</label>
+                        <input
+                            name="drive_folder_id"
+                            value="<?= e((string)($settings['drive_folder_id'] ?? '')) ?>"
+                            class="w-full border border-slate-300 rounded px-3 py-2"
+                            placeholder="Ex: 1AbCDefGhIJkLmNoPqRsTuVwXyZ..."
+                            autocomplete="off"
+                        >
+                        <div class="mt-2 text-xs text-slate-500">
+                            Laisser vide pour utiliser le dossier par défaut.
+                        </div>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+
+        <div class="p-3 border border-slate-200 rounded">
+            <div class="font-medium">Aide au paramétrage</div>
+            <div class="mt-2 text-sm text-slate-700 space-y-2">
+                <div>
+                    <div class="font-medium">1) Configuration serveur (une fois)</div>
+                    <div class="text-slate-600">
+                        Le module Drive nécessite les variables <code class="text-xs">GOOGLE_CLIENT_ID</code>, <code class="text-xs">GOOGLE_CLIENT_SECRET</code> et <code class="text-xs">GOOGLE_REDIRECT_URI</code>.
+                        Si l'écran indique « non configuré », il faut ajouter ces variables côté serveur.
+                    </div>
+                </div>
+                <div>
+                    <div class="font-medium">2) Connexion du compte Drive (par tenant)</div>
+                    <div class="text-slate-600">
+                        Va sur <span class="font-mono text-xs">Admin &gt; Modules</span> puis clique <span class="font-mono text-xs">Connecter Google Drive</span>.
+                        Une fois connecté, tu peux revenir ici.
+                    </div>
+                </div>
+                <div>
+                    <div class="font-medium">3) Choisir le dossier de stockage (Folder ID)</div>
+                    <div class="text-slate-600">
+                        Crée (ou choisis) un dossier dans Google Drive, puis ouvre-le.
+                        Dans l'URL du navigateur, l'ID est la partie après <span class="font-mono text-xs">/folders/</span>.
+                    </div>
+                    <div class="mt-1 text-xs text-slate-500">
+                        Exemple : <span class="font-mono text-xs">https://drive.google.com/drive/folders/1AbCDefGhIJkLmNoPqRsTuVwXyZ</span>
+                        → Folder ID = <span class="font-mono text-xs">1AbCDefGhIJkLmNoPqRsTuVwXyZ</span>
+                    </div>
+                </div>
+                <div class="text-slate-600">
+                    Astuce : laisse le champ vide si tu veux stocker « par défaut » (sans imposer de dossier parent).
+                </div>
+            </div>
+        </div>
     <?php endif; ?>
 
     <button class="bg-slate-900 text-white rounded px-3 py-2 text-sm" type="submit">Enregistrer</button>

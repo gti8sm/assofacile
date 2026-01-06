@@ -83,6 +83,11 @@ final class ModuleSettings
         self::setRaw($tenantId, $moduleKey, $settingKey, json_encode($value));
     }
 
+    public static function setString(int $tenantId, string $moduleKey, string $settingKey, string $value): void
+    {
+        self::setRaw($tenantId, $moduleKey, $settingKey, json_encode($value, JSON_UNESCAPED_UNICODE));
+    }
+
     public static function setRaw(int $tenantId, string $moduleKey, string $settingKey, string $valueJson): void
     {
         $pdo = Db::pdo();

@@ -132,6 +132,18 @@ ob_start();
                                         <input type="hidden" name="subscription_id" value="<?= e((string)$s['id']) ?>">
                                         <button class="border border-slate-300 rounded px-3 py-2 text-sm" type="submit">Marquer payée</button>
                                     </form>
+                                <?php elseif ((string)($s['status'] ?? '') === 'paid'): ?>
+                                    <a class="border border-slate-300 rounded px-3 py-2 text-sm" target="_blank" rel="noopener" href="/memberships/card?subscription_id=<?= e((string)$s['id']) ?>">Carte</a>
+                                <?php elseif (!empty($_SESSION['is_admin'])
+                                    && in_array((string)($s['status'] ?? ''), ['pending', 'canceled', 'expired'], true)
+                                    && empty($s['treasury_transaction_id'])
+                                    && empty($s['payment_external_id'])): ?>
+                                    <form method="post" action="/memberships/subscriptions/delete-test" class="inline" onsubmit="return confirm('Supprimer cette cotisation de test ?');">
+                                        <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
+                                        <input type="hidden" name="subscription_id" value="<?= e((string)$s['id']) ?>">
+                                        <input type="hidden" name="return_to" value="<?= e('/households/edit?id=' . (string)($household['id'] ?? '')) ?>">
+                                        <button class="border border-red-300 text-red-700 rounded px-3 py-2 text-sm" type="submit">Supprimer (test)</button>
+                                    </form>
                                 <?php else: ?>
                                     <span class="text-slate-400">—</span>
                                 <?php endif; ?>

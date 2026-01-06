@@ -1,0 +1,23 @@
+CREATE TABLE entity_documents (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  tenant_id INT UNSIGNED NOT NULL,
+  entity_type ENUM('member','tier') NOT NULL,
+  entity_id BIGINT UNSIGNED NOT NULL,
+  title VARCHAR(190) NOT NULL,
+  url VARCHAR(500) NULL,
+  notes TEXT NULL,
+  storage_driver ENUM('local','gdrive') NOT NULL DEFAULT 'local',
+  local_path VARCHAR(255) NULL,
+  gdrive_file_id VARCHAR(255) NULL,
+  original_name VARCHAR(255) NULL,
+  mime_type VARCHAR(190) NULL,
+  size_bytes INT UNSIGNED NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP NULL,
+  deleted_by_user_id INT UNSIGNED NULL,
+  delete_reason VARCHAR(500) NULL,
+  INDEX idx_ed_entity (tenant_id, entity_type, entity_id),
+  INDEX idx_ed_tenant_deleted (tenant_id, deleted_at),
+  CONSTRAINT fk_ed_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ed_deleted_by FOREIGN KEY (deleted_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

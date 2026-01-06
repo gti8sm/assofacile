@@ -10,6 +10,26 @@ final class Migrator
 {
     private const TABLE = 'schema_migrations';
 
+    /** @return array<int, array{migration: string, applied_at: string}> */
+    public static function appliedList(PDO $pdo): array
+    {
+        try {
+            $pdo->query('SELECT 1 FROM ' . self::TABLE . ' LIMIT 1');
+        } catch (\Throwable $e) {
+            self::ensureMigrationsTable($pdo);
+        }
+
+        $rows = $pdo->query('SELECT migration, applied_at FROM ' . self::TABLE . ' ORDER BY applied_at DESC, id DESC')->fetchAll();
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'migration' => (string)$r['migration'],
+                'applied_at' => (string)$r['applied_at'],
+            ];
+        }
+        return $out;
+    }
+
     /** @return string[] */
     public static function pending(PDO $pdo): array
     {

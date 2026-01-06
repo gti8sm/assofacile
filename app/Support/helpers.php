@@ -32,3 +32,34 @@ function date_fr(?string $ymd): string
 
     return $dt->format('d/m/Y');
 }
+
+function tenant_path(string $path): string
+{
+    $path = trim($path);
+    if ($path === '') {
+        return $path;
+    }
+
+    if (preg_match('~^https?://~i', $path) || str_starts_with($path, '//')) {
+        return $path;
+    }
+
+    if (str_starts_with($path, '/t/') || str_starts_with($path, '/s/')) {
+        return $path;
+    }
+
+    if (in_array($path, ['/login', '/logout', '/install'], true)) {
+        return $path;
+    }
+
+    $tenantSlug = isset($_SESSION['tenant_slug']) ? trim((string)$_SESSION['tenant_slug']) : '';
+    if ($tenantSlug === '') {
+        return $path;
+    }
+
+    if ($path[0] !== '/') {
+        $path = '/' . $path;
+    }
+
+    return '/t/' . $tenantSlug . $path;
+}

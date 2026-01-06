@@ -44,11 +44,29 @@ final class LicensesController
         $tenantName = trim((string)($_POST['tenant_name'] ?? ''));
         $tenantEmail = trim((string)($_POST['tenant_email'] ?? ''));
         $planType = trim((string)($_POST['plan_type'] ?? ''));
+        $planTier = trim((string)($_POST['plan_tier'] ?? 'core'));
         $validUntil = trim((string)($_POST['valid_until'] ?? ''));
+
+        $quotaTiersMaxRaw = trim((string)($_POST['quota_tiers_max'] ?? ''));
+        $quotaStorageMbRaw = trim((string)($_POST['quota_storage_mb'] ?? ''));
+        $quotaTiersMax = ($quotaTiersMaxRaw === '') ? null : (int)$quotaTiersMaxRaw;
+        $quotaStorageMb = ($quotaStorageMbRaw === '') ? null : (int)$quotaStorageMbRaw;
 
         if ($planType !== 'annual' && $planType !== 'lifetime') {
             Session::flash('error', 'Données invalides.');
             redirect('/licenses');
+        }
+
+        if ($planTier !== 'core' && $planTier !== 'premium') {
+            Session::flash('error', 'Données invalides.');
+            redirect('/licenses');
+        }
+
+        if ($quotaTiersMax !== null && $quotaTiersMax < 0) {
+            $quotaTiersMax = null;
+        }
+        if ($quotaStorageMb !== null && $quotaStorageMb < 0) {
+            $quotaStorageMb = null;
         }
 
         if ($tenantEmail !== '' && filter_var($tenantEmail, FILTER_VALIDATE_EMAIL) === false) {
@@ -76,11 +94,14 @@ final class LicensesController
         while (!$created && $attempts < 5) {
             $attempts++;
             try {
-                $stmt = $pdo->prepare('INSERT INTO licenses (license_key, tenant_name, plan_type, valid_until) VALUES (:license_key, :tenant_name, :plan_type, :valid_until)');
+                $stmt = $pdo->prepare('INSERT INTO licenses (license_key, tenant_name, plan_type, plan_tier, quota_tiers_max, quota_storage_mb, valid_until) VALUES (:license_key, :tenant_name, :plan_type, :plan_tier, :quota_tiers_max, :quota_storage_mb, :valid_until)');
                 $stmt->execute([
                     'license_key' => $licenseKey,
                     'tenant_name' => ($tenantName !== '' ? $tenantName : null),
                     'plan_type' => $planType,
+                    'plan_tier' => $planTier,
+                    'quota_tiers_max' => $quotaTiersMax,
+                    'quota_storage_mb' => $quotaStorageMb,
                     'valid_until' => ($validUntil !== '' ? $validUntil : null),
                 ]);
                 $created = true;

@@ -1,4 +1,5 @@
 /.env
+/licensing/.env
 /public/storage/
 /vendor/
 

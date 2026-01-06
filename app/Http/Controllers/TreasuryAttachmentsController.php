@@ -9,6 +9,7 @@ use App\Support\Access;
 use App\Support\Session;
 use App\Support\Storage;
 use App\Support\GoogleDrive;
+use App\Support\Modules;
 
 final class TreasuryAttachmentsController
 {
@@ -31,7 +32,7 @@ final class TreasuryAttachmentsController
         }
 
         $pdo = Db::pdo();
-        $stmt = $pdo->prepare('SELECT id, type, label, occurred_on FROM treasury_transactions WHERE id = :id AND tenant_id = :tenant_id');
+        $stmt = $pdo->prepare('SELECT id, type, label, occurred_on FROM treasury_transactions WHERE id = :id AND tenant_id = :tenant_id AND deleted_at IS NULL');
         $stmt->execute([
             'id' => $transactionId,
             'tenant_id' => (int)$_SESSION['tenant_id'],
@@ -67,19 +68,38 @@ final class TreasuryAttachmentsController
         }
 
         $pdo = Db::pdo();
-        $stmt = $pdo->prepare('SELECT id FROM treasury_transactions WHERE id = :id AND tenant_id = :tenant_id');
+        $stmt = $pdo->prepare('SELECT id, occurred_on FROM treasury_transactions WHERE id = :id AND tenant_id = :tenant_id AND deleted_at IS NULL');
         $stmt->execute([
             'id' => $transactionId,
             'tenant_id' => (int)$_SESSION['tenant_id'],
         ]);
-        if (!$stmt->fetch()) {
+        $tx = $stmt->fetch();
+        if (!$tx) {
             Session::flash('error', 'Transaction invalide.');
             redirect('/treasury');
         }
 
-        $storeDriver = (string)($_POST['store_driver'] ?? 'local');
-        $preferDrive = ($storeDriver === 'gdrive');
-        $saved = self::saveUploadedFiles((int)$_SESSION['tenant_id'], $transactionId, $_FILES['attachments'] ?? null, $preferDrive);
+        $date = (string)($tx['occurred_on'] ?? '');
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            $stmt = $pdo->prepare(
+                'SELECT 1
+                 FROM treasury_closures
+                 WHERE tenant_id = :tenant_id
+                   AND start_date <= :d
+                   AND end_date >= :d
+                 LIMIT 1'
+            );
+            $stmt->execute([
+                'tenant_id' => (int)$_SESSION['tenant_id'],
+                'd' => $date,
+            ]);
+            if ($stmt->fetch()) {
+                Session::flash('error', 'Période clôturée : ajout de justificatifs interdit.');
+                redirect('/treasury/attachments?transaction_id=' . $transactionId);
+            }
+        }
+
+        $saved = self::saveUploadedFiles((int)$_SESSION['tenant_id'], $transactionId, $_FILES['attachments'] ?? null);
 
         if ($saved <= 0) {
             Session::flash('error', 'Aucun fichier valide (jpg/png/pdf, max 10 Mo).');
@@ -98,14 +118,34 @@ final class TreasuryAttachmentsController
 
         $pdo = Db::pdo();
 
-        $useDrive = $preferDrive
-            && Modules::isEnabled($tenantId, 'drive')
+        $occurredOn = null;
+        try {
+            $stmt = $pdo->prepare('SELECT occurred_on FROM treasury_transactions WHERE tenant_id = :tenant_id AND id = :id LIMIT 1');
+            $stmt->execute(['tenant_id' => $tenantId, 'id' => $transactionId]);
+            $row = $stmt->fetch();
+            $d = (string)($row['occurred_on'] ?? '');
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) {
+                $occurredOn = $d;
+            }
+        } catch (\Throwable $e) {
+            $occurredOn = null;
+        }
+
+        $year = $occurredOn ? substr($occurredOn, 0, 4) : date('Y');
+        $month = $occurredOn ? substr($occurredOn, 5, 2) : date('m');
+
+        $useDrive = Modules::isEnabled($tenantId, 'drive')
             && GoogleDrive::isConfigured()
             && GoogleDrive::isAvailable()
             && GoogleDrive::isConnected($tenantId);
 
         $drive = $useDrive ? GoogleDrive::getService($tenantId) : null;
         $driveFolderId = $useDrive ? GoogleDrive::getDriveFolderId($tenantId) : null;
+
+        $driveTargetFolderId = null;
+        if ($drive !== null) {
+            $driveTargetFolderId = GoogleDrive::ensureTreasuryAttachmentFolder($tenantId, $driveFolderId, $year, $month, $transactionId);
+        }
 
         $saved = 0;
         $count = count($files['name']);
@@ -142,7 +182,9 @@ final class TreasuryAttachmentsController
             if ($drive !== null) {
                 try {
                     $meta = ['name' => basename($origName)];
-                    if ($driveFolderId) {
+                    if ($driveTargetFolderId) {
+                        $meta['parents'] = [$driveTargetFolderId];
+                    } elseif ($driveFolderId) {
                         $meta['parents'] = [$driveFolderId];
                     }
                     $fileMetadata = new \Google_Service_Drive_DriveFile($meta);
@@ -177,7 +219,7 @@ final class TreasuryAttachmentsController
                 }
             }
 
-            $dir = Storage::privatePath('tenant_' . $tenantId . '/treasury/' . $transactionId);
+            $dir = Storage::privatePath('tenant_' . $tenantId . '/ged/treasury/' . $year . '/' . $month . '/tx_' . $transactionId);
             if (!is_dir($dir)) {
                 mkdir($dir, 0775, true);
             }
@@ -189,7 +231,7 @@ final class TreasuryAttachmentsController
                 continue;
             }
 
-            $rel = 'tenant_' . $tenantId . '/treasury/' . $transactionId . '/' . $filename;
+            $rel = 'tenant_' . $tenantId . '/ged/treasury/' . $year . '/' . $month . '/tx_' . $transactionId . '/' . $filename;
 
             $stmt = $pdo->prepare('INSERT INTO treasury_attachments (tenant_id, transaction_id, storage_driver, local_path, original_name, mime_type, size_bytes) VALUES (:tenant_id, :tx, :driver, :path, :name, :mime, :size)');
             $stmt->execute([

@@ -1,0 +1,24 @@
+CREATE TABLE project_links (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  tenant_id INT UNSIGNED NOT NULL,
+  project_id BIGINT UNSIGNED NOT NULL,
+  label VARCHAR(190) NOT NULL,
+  url VARCHAR(500) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_pl_project (tenant_id, project_id),
+  CONSTRAINT fk_pl_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pl_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE project_documents (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  tenant_id INT UNSIGNED NOT NULL,
+  project_id BIGINT UNSIGNED NOT NULL,
+  title VARCHAR(190) NOT NULL,
+  url VARCHAR(500) NULL,
+  notes TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_pd_project (tenant_id, project_id),
+  CONSTRAINT fk_pd_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pd_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

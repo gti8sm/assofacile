@@ -27,4 +27,11 @@ spl_autoload_register(function (string $class): void {
 
 App\Support\Env::load(__DIR__ . '/../.env');
 
+$appDebug = App\Support\Env::get('APP_DEBUG');
+if ($appDebug === '1' || strtolower((string)$appDebug) === 'true') {
+    ini_set('display_errors', '1');
+    ini_set('display_startup_errors', '1');
+    error_reporting(E_ALL);
+}
+
 App\Support\Session::start();

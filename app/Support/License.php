@@ -200,7 +200,7 @@ final class License
             return ['ok' => false, 'status' => 'missing', 'message' => 'Aucune licence configurée.'];
         }
 
-        $server = Env::get('LICENSE_SERVER_URL', 'https://licences.assofacile.fr');
+        $server = Env::get('LICENSE_SERVER_URL', 'https://licences.assofacile.net');
         $server = rtrim((string)$server, '/');
         $url = $server . '/api/v1/licenses/validate';
 
@@ -225,10 +225,106 @@ final class License
             ],
         ]);
 
-        $raw = @file_get_contents($url, false, $ctx);
+        $raw = false;
+        $lastErr = null;
+        $httpCode = null;
+        $statusLine = null;
+        $respHeaders = [];
+
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            if ($ch !== false) {
+                $respHeaders = [];
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Accept: application/json']);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+                curl_setopt(
+                    $ch,
+                    CURLOPT_HEADERFUNCTION,
+                    static function ($ch, string $headerLine) use (&$respHeaders): int {
+                        $line = trim($headerLine);
+                        if ($line !== '' && stripos($line, 'HTTP/') !== 0) {
+                            $respHeaders[] = $line;
+                        }
+                        return strlen($headerLine);
+                    }
+                );
+                $raw = curl_exec($ch);
+                if ($raw === false) {
+                    $lastErr = 'cURL: ' . (string)curl_error($ch);
+                } else {
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                }
+                curl_close($ch);
+            }
+        }
+
         if ($raw === false) {
-            self::touchCheckError($tenantId, 'Serveur de licence injoignable.');
-            return ['ok' => false, 'status' => 'unreachable', 'message' => 'Serveur de licence injoignable.'];
+            $raw = @file_get_contents($url, false, $ctx);
+            if ($raw === false) {
+                $headers = $http_response_header ?? null;
+                if (is_array($headers) && isset($headers[0]) && is_string($headers[0])) {
+                    $statusLine = $headers[0];
+                    $lastErr = 'HTTP: ' . $headers[0];
+                }
+            } else {
+                $headers = $http_response_header ?? null;
+                if (is_array($headers) && isset($headers[0]) && is_string($headers[0])) {
+                    $statusLine = $headers[0];
+                }
+            }
+        }
+
+        if ($raw === false) {
+            $msg = $lastErr ?: 'Serveur de licence injoignable.';
+            self::touchCheckError($tenantId, $msg);
+            return ['ok' => false, 'status' => 'unreachable', 'message' => $msg];
+        }
+
+        if (is_int($httpCode) && $httpCode >= 400) {
+            $excerpt = '';
+            if (is_string($raw) && $raw !== '') {
+                $excerpt = trim(preg_replace('/\s+/', ' ', $raw) ?? '');
+                if (strlen($excerpt) > 220) {
+                    $excerpt = substr($excerpt, 0, 220) . '...';
+                }
+            }
+
+            $headersExcerpt = '';
+            if (!empty($respHeaders)) {
+                $headersExcerpt = implode(' | ', array_slice($respHeaders, 0, 4));
+                if (strlen($headersExcerpt) > 220) {
+                    $headersExcerpt = substr($headersExcerpt, 0, 220) . '...';
+                }
+            }
+
+            $msg = 'URL: ' . $url . ' - HTTP: ' . (string)$httpCode;
+            if ($excerpt !== '') {
+                $msg .= ' - ' . $excerpt;
+            } elseif (is_string($raw) && $raw === '') {
+                $msg .= ' - (body vide)';
+            }
+            if ($headersExcerpt !== '') {
+                $msg .= ' - headers: ' . $headersExcerpt;
+            }
+
+            self::touchCheckError($tenantId, $msg);
+            return ['ok' => false, 'status' => 'error', 'message' => $msg];
+        }
+
+        if ($statusLine !== null && preg_match('/\s(4\d\d|5\d\d)\s/', $statusLine)) {
+            $excerpt = '';
+            if (is_string($raw) && $raw !== '') {
+                $excerpt = trim(preg_replace('/\s+/', ' ', $raw) ?? '');
+                if (strlen($excerpt) > 220) {
+                    $excerpt = substr($excerpt, 0, 220) . '...';
+                }
+            }
+            $msg = 'URL: ' . $url . ' - HTTP: ' . $statusLine . ($excerpt !== '' ? ' - ' . $excerpt : (is_string($raw) && $raw === '' ? ' - (body vide)' : ''));
+            self::touchCheckError($tenantId, $msg);
+            return ['ok' => false, 'status' => 'error', 'message' => $msg];
         }
 
         $data = json_decode($raw, true);

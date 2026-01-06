@@ -4,7 +4,7 @@ ob_start();
 ?>
 <div class="flex items-center justify-between">
     <h1 class="text-2xl font-semibold">Catégories</h1>
-    <a class="border border-slate-300 rounded px-3 py-2 text-sm" href="/treasury">Retour</a>
+    <a class="border border-slate-300 rounded px-3 py-2 text-sm" href="<?= e(tenant_path('/treasury')) ?>">Retour</a>
 </div>
 
 <?php if (!empty($flash)): ?>
@@ -30,6 +30,7 @@ ob_start();
         <thead class="bg-slate-50">
         <tr>
             <th class="text-left p-3">Nom</th>
+            <th class="text-left p-3">Compte</th>
             <th class="text-left p-3">Créée le</th>
         </tr>
         </thead>
@@ -37,12 +38,25 @@ ob_start();
         <?php foreach ($categories as $c): ?>
             <tr class="border-t border-slate-100">
                 <td class="p-3"><?= e((string)$c['name']) ?></td>
+                <td class="p-3">
+                    <form method="post" action="<?= e(tenant_path('/treasury/categories/update')) ?>" class="flex items-center gap-2">
+                        <input type="hidden" name="_csrf" value="<?= e(App\Support\Csrf::token()) ?>">
+                        <input type="hidden" name="id" value="<?= (int)($c['id'] ?? 0) ?>">
+                        <input
+                            name="account_code"
+                            value="<?= e((string)($c['account_code'] ?? '')) ?>"
+                            class="w-36 border border-slate-300 rounded px-2 py-1"
+                            placeholder="Ex: 606300"
+                        >
+                        <button class="border border-slate-300 rounded px-2 py-1 text-xs" type="submit">OK</button>
+                    </form>
+                </td>
                 <td class="p-3 text-slate-600"><?= e((string)$c['created_at']) ?></td>
             </tr>
         <?php endforeach; ?>
         <?php if (empty($categories)): ?>
             <tr class="border-t border-slate-100">
-                <td class="p-3 text-slate-500" colspan="2">Aucune catégorie.</td>
+                <td class="p-3 text-slate-500" colspan="3">Aucune catégorie.</td>
             </tr>
         <?php endif; ?>
         </tbody>

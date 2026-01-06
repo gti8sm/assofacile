@@ -29,7 +29,8 @@ CREATE TABLE license_module_subscriptions (
 INSERT IGNORE INTO modules_catalog (module_key, name, price_month_cents, price_year_cents, is_active)
 VALUES
   ('treasury', 'Trésorerie', 900, 9000, 1),
-  ('drive', 'Google Drive', 500, 5000, 1);
+  ('drive', 'Google Drive', 500, 5000, 1),
+  ('projects', 'Projets', 900, 9000, 1);
 
 INSERT IGNORE INTO license_module_subscriptions (license_id, module_id, billing_period, valid_until, is_active)
 SELECT l.id, mc.id, 'annual', IFNULL(l.valid_until, DATE_ADD(CURDATE(), INTERVAL 10 YEAR)), 1

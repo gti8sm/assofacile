@@ -119,6 +119,53 @@ final class InstallController
             $stmt->execute(['name' => $tenantName]);
             $tenantId = (int)$pdo->lastInsertId();
 
+            $baseSlug = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $tenantName) ?? ''));
+            $baseSlug = trim($baseSlug, '-');
+            if ($baseSlug === '') {
+                $baseSlug = 'asso';
+            }
+            $slug = $baseSlug . '-' . $tenantId;
+            $stmt = $pdo->prepare('UPDATE tenants SET slug = :slug WHERE id = :id');
+            $stmt->execute(['slug' => $slug, 'id' => $tenantId]);
+
+            $stmt = $pdo->prepare('INSERT INTO public_pages (tenant_id, slug, title, is_home, is_published) VALUES (:tenant_id, :slug, :title, 1, 1)');
+            $stmt->execute([
+                'tenant_id' => $tenantId,
+                'slug' => 'home',
+                'title' => $tenantName,
+            ]);
+            $publicPageId = (int)$pdo->lastInsertId();
+
+            $defaultContent = json_encode([
+                [
+                    'type' => 'hero',
+                    'props' => [
+                        'title' => $tenantName,
+                        'subtitle' => 'Notre site est en cours de construction.',
+                        'cta_label' => 'Se connecter',
+                        'cta_href' => '/login',
+                    ],
+                ],
+                [
+                    'type' => 'text',
+                    'props' => [
+                        'title' => 'Qui sommes-nous ? ',
+                        'body' => 'Décris ici ton association et ses activités.',
+                    ],
+                ],
+            ]);
+
+            $stmt = $pdo->prepare('INSERT INTO public_page_revisions (tenant_id, page_id, schema_version, content_json, created_by_user_id) VALUES (:tenant_id, :page_id, 1, :content_json, NULL)');
+            $stmt->execute([
+                'tenant_id' => $tenantId,
+                'page_id' => $publicPageId,
+                'content_json' => (string)$defaultContent,
+            ]);
+            $publicRevId = (int)$pdo->lastInsertId();
+
+            $stmt = $pdo->prepare('UPDATE public_pages SET published_revision_id = :rev_id WHERE id = :id');
+            $stmt->execute(['rev_id' => $publicRevId, 'id' => $publicPageId]);
+
             $hash = password_hash($adminPass, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare('INSERT INTO users (tenant_id, email, password_hash, full_name, is_active, is_admin) VALUES (:tenant_id, :email, :password_hash, :full_name, 1, 1)');
             $stmt->execute([
@@ -130,11 +177,20 @@ final class InstallController
 
             $pdo->exec("INSERT IGNORE INTO modules (module_key, name) VALUES ('treasury', 'Trésorerie')");
             $pdo->exec("INSERT IGNORE INTO modules (module_key, name) VALUES ('drive', 'Google Drive')");
+            $pdo->exec("INSERT IGNORE INTO modules (module_key, name) VALUES ('projects', 'Projets')");
+            $pdo->exec("INSERT IGNORE INTO modules (module_key, name) VALUES ('public_site', 'Site public')");
 
             $stmt = $pdo->prepare("INSERT IGNORE INTO tenant_modules (tenant_id, module_id, is_enabled, enabled_at)
                 SELECT :tenant_id, m.id, 1, CURRENT_TIMESTAMP
                 FROM modules m
                 WHERE m.module_key = 'treasury'
+                LIMIT 1");
+            $stmt->execute(['tenant_id' => $tenantId]);
+
+            $stmt = $pdo->prepare("INSERT IGNORE INTO tenant_modules (tenant_id, module_id, is_enabled, enabled_at)
+                SELECT :tenant_id, m.id, 1, CURRENT_TIMESTAMP
+                FROM modules m
+                WHERE m.module_key = 'public_site'
                 LIMIT 1");
             $stmt->execute(['tenant_id' => $tenantId]);
 
